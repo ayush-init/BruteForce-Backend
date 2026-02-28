@@ -11,7 +11,7 @@ model City {
   id         Int       @id @default(autoincrement())
   city_name  String    @unique @db.VarChar(100)
   created_at DateTime  @default(now())
-  slug       String    @unique @db.VarChar(120)
+  slug       String?   @unique @db.VarChar(120)
   batches    Batch[]
   students   Student[]
 }
@@ -21,13 +21,12 @@ model Batch {
   batch_name String   @db.VarChar(50)
   year       Int
   city_id    Int
-  slug       String   @db.VarChar(80)
+  slug       String?  @db.VarChar(80)
   created_at DateTime @default(now())
 
-  city               City                 @relation(fields: [city_id], references: [id], onDelete: Cascade)
-  students           Student[]
-  classes            Class[]
-  questionVisibility QuestionVisibility[]
+  city     City      @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  students Student[]
+  classes  Class[]
 
   @@unique([city_id, year, batch_name])
   @@unique([city_id, slug])
@@ -76,6 +75,7 @@ model Topic {
   id         Int        @id @default(autoincrement())
   topic_name String     @unique @db.VarChar(150)
   created_at DateTime   @default(now())
+  slug       String    @unique @db.VarChar(170)
   classes    Class[]
   questions  Question[]
 }
@@ -127,11 +127,9 @@ model QuestionVisibility {
 
   class    Class    @relation(fields: [class_id], references: [id], onDelete: Cascade)
   question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
- 
 
   @@unique([class_id, question_id])
   @@index([question_id])
- 
 }
 
 model StudentProgress {
@@ -159,4 +157,27 @@ model Bookmark {
 
   @@unique([student_id, question_id])
   @@index([student_id])
+}
+
+enum Platform {
+  LEETCODE
+  GFG
+  OTHER
+}
+
+enum Level {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionType {
+  HOMEWORK
+  CLASSWORK
+}
+
+enum AdminRole {
+  SUPERADMIN
+  TEACHER
+  INTERN
 }

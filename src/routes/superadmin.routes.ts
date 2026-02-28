@@ -7,8 +7,8 @@ import {
   createCity, 
   getAllCities, 
   //getCityById,
-  //updateCity,
-  //deleteCity 
+  updateCity,
+  deleteCity
 } from "../controllers/admin/city.controller";
 
 // Batch controllers
@@ -32,16 +32,15 @@ router.use(verifyToken, isSuperAdmin);
 // ===== CITY MANAGEMENT =====
 router.post("/cities", createCity);
 router.get("/cities", getAllCities);
-// router.get("/cities/:id", getCityById);
-// router.patch("/cities/:id", updateCity);
-// router.delete("/cities/:id", deleteCity);
+router.patch("/cities/:slug", updateCity);
+router.delete("/cities/:slug", deleteCity);
 
 // ===== BATCH MANAGEMENT =====
 router.post("/batches", createBatch);
 // router.get("/batches", getAllBatches);
-// router.get("/batches/:id", getBatchById);
-// router.patch("/batches/:id", updateBatch);
-// router.delete("/batches/:id", deleteBatch);
+// router.get("/batches/:slug", getBatchById);
+// router.patch("/batches/:slug", updateBatch);
+// router.delete("/batches/:slug", deleteBatch);
 
 // ===== ADMIN MANAGEMENT (Create Teachers/Interns) =====
 router.post("/admins", registerAdmin);

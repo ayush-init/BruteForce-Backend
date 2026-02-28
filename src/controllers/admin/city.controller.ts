@@ -43,3 +43,7 @@ export const getAllCities = async (_req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch cities" });
   }
 };
+
+// delete city 
+
+
