@@ -121,6 +121,7 @@ export const loginStudent = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to login' });
   }
 };
+
 // Admin/Teacher Registration
 export const registerAdmin = async (req: Request, res: Response) => {
   try {
@@ -186,6 +187,7 @@ export const registerAdmin = async (req: Request, res: Response) => {
   }
 };
 
+
 // Admin Login
 export const loginAdmin = async (req: Request, res: Response) => {
   try {
@@ -232,3 +234,5 @@ export const loginAdmin = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to login' });
   }
 };
+
+

@@ -1,0 +1,11 @@
+normal setup done 
+super admin (default create)
+-> city (post , get )
+-> batch (post , get )
+-> teachers/admins (post ,get)
+
+admin
+
+topics ( post, get )
+
+

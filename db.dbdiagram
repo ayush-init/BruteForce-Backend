@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "darkMode": true,
-  "gridEnabling": false,
+  "gridEnabling": true,
   "detailLevel": "All",
   "tablePositions": [],
   "tableGroupCollapseStates": [],

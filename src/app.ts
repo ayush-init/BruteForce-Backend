@@ -5,7 +5,7 @@ import authRoutes from './routes/auth.routes';
 import { errorHandler } from './middlewares/errorHandler.middleware';
 import studentRoutes from "./routes/student.routes";
 import adminRoutes from "./routes/admin.routes";
-
+import superadminRoutes from './routes/superadmin.routes';
 
 dotenv.config();
 
@@ -19,7 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use("/api/students", studentRoutes);
-app.use("/api/admin", adminRoutes);
+app.use('/api/admin', adminRoutes);              // Teacher & Intern
+app.use('/api/superadmin',superadminRoutes);    // Superadmin ONLY
 
 
 // Health check
