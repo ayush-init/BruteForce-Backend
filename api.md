@@ -1,73 +1,120 @@
-# DSA Tracker API Documentation
+#  DSA Tracker API Documentation
 
-## 🔐 Authentication
+> **Complete API documentation for frontend developers**  
+> **Version**: 1.0.0 | **Last Updated**: Feb 2025
 
-### Base URL: `http://localhost:5000`
+---
+
+## 🔐 Authentication Setup
+
+### Base URL
+```
+http://localhost:5000
+```
 
 ### Authentication Headers
 All protected routes require:
-```
+```http
 Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
 Content-Type: application/json
 ```
 
+### Token Flow
+1. **Login** → Get `accessToken` + `refreshToken`
+2. **Store** tokens securely in frontend
+3. **Use `accessToken`** for all API requests
+4. **Refresh** token when expired (if implemented)
+
 ---
 
-##  AUTH ROUTES (`/api/auth`)
+## 🚀 AUTHENTICATION ROUTES (`/api/auth`)
 
 ### Student Registration
-- **POST** `/api/auth/student/register`
-- **Body**: 
+```http
+POST /api/auth/student/register
+```
+
+**Request Body:**
 ```json
 {
   "name": "Student Name",
-  "email": "student@example.com",
+  "email": "student@example.com", 
   "username": "student123",
   "password": "password123"
 }
 ```
-- **Response**: 
+
+**Success Response (201):**
 ```json
 {
   "message": "Student registered successfully",
-  "token": "jwt_token_here",
-  "user": { "id": 1, "name": "Student", "email": "student@example.com", "username": "student123" }
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "name": "Student Name",
+    "email": "student@example.com",
+    "username": "student123"
+  }
 }
 ```
 
+**Error Response (400):**
+```json
+{
+  "error": "Email already exists"
+}
+```
+
+---
+
 ### Student Login
-- **POST** `/api/auth/student/login`
-- **Body**: 
+```http
+POST /api/auth/student/login
+```
+
+**Request Body:**
 ```json
 {
   "email": "student@example.com",
   "password": "password123"
 }
 ```
-- **Response**: 
+
+**Success Response (200):**
 ```json
 {
   "message": "Login successful",
-  "token": "jwt_token_here",
-  "user": { "id": 1, "name": "Student", "email": "student@example.com", "username": "student123" }
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "name": "Student Name",
+    "email": "student@example.com",
+    "username": "student123"
+  }
 }
 ```
 
-### Admin Login (All Admin Roles)
-- **POST** `/api/auth/admin/login`
-- **Body**: 
+---
+
+### Admin Login (All Roles)
+```http
+POST /api/auth/admin/login
+```
+
+**Request Body:**
 ```json
 {
   "email": "admin@example.com",
   "password": "admin123"
 }
 ```
-- **Response**: 
+
+**Success Response (200):**
 ```json
 {
   "message": "Login successful",
-  "accessToken": "jwt_token_here",
-  "refreshToken": "refresh_token_here",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": 1,
     "name": "Admin Name",
@@ -81,73 +128,148 @@ Content-Type: application/json
 ---
 
 ## 👑 SUPERADMIN ROUTES (`/api/superadmin`)
-**Access**: SuperAdmin only
-**Authentication**: Required (Bearer Token)
+**🔒 Access**: SuperAdmin only  
+**🔐 Authentication**: Required
 
 ### Cities Management
-- **GET** `/api/superadmin/cities`
-- **Response**: Array of all cities
-```json
-[
-  {
-    "id": 1,
-    "city_name": "Mumbai",
-    "created_at": "2025-01-01T00:00:00.000Z"
-  }
-]
+
+#### Get All Cities
+```http
+GET /api/superadmin/cities
 ```
 
-- **POST** `/api/superadmin/cities`
-- **Body**: 
+**Success Response (200):**
+```json
+{
+  "cities": [
+    {
+      "id": 1,
+      "city_name": "Mumbai",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "city_name": "Pune", 
+      "created_at": "2025-01-02T00:00:00.000Z",
+      "updated_at": "2025-01-02T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+#### Create City
+```http
+POST /api/superadmin/cities
+```
+
+**Request Body:**
 ```json
 {
   "city_name": "New City"
 }
 ```
-- **Response**: 
+
+**Success Response (201):**
 ```json
 {
   "message": "City created successfully",
-  "city": { "id": 2, "city_name": "New City", "created_at": "..." }
+  "city": {
+    "id": 3,
+    "city_name": "New City",
+    "created_at": "2025-02-01T10:30:00.000Z",
+    "updated_at": "2025-02-01T10:30:00.000Z"
+  }
 }
 ```
 
-- **PATCH** `/api/superadmin/cities/:id`
-- **Params**: `id` (city ID)
-- **Body**: 
+---
+
+#### Update City
+```http
+PATCH /api/superadmin/cities/:id
+```
+
+**URL Parameters:**
+- `id` (number) - City ID
+
+**Request Body:**
 ```json
 {
   "city_name": "Updated City Name"
 }
 ```
 
-- **DELETE** `/api/superadmin/cities/:id`
-- **Params**: `id` (city ID)
-- **Response**: 
+**Success Response (200):**
+```json
+{
+  "message": "City updated successfully",
+  "city": {
+    "id": 1,
+    "city_name": "Updated City Name",
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-02-01T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+#### Delete City
+```http
+DELETE /api/superadmin/cities/:id
+```
+
+**URL Parameters:**
+- `id` (number) - City ID
+
+**Success Response (200):**
 ```json
 {
   "message": "City deleted successfully"
 }
 ```
 
+---
+
 ### Batches Management
-- **GET** `/api/superadmin/batches`
-- **Response**: Array of all batches with city info
-```json
-[
-  {
-    "id": 1,
-    "batch_name": "Batch A",
-    "year": 2024,
-    "city_id": 1,
-    "slug": "batch-a",
-    "created_at": "2025-01-01T00:00:00.000Z"
-  }
-]
+
+#### Get All Batches
+```http
+GET /api/superadmin/batches
 ```
 
-- **POST** `/api/superadmin/batches`
-- **Body**: 
+**Success Response (200):**
+```json
+{
+  "batches": [
+    {
+      "id": 1,
+      "batch_name": "Batch A",
+      "year": 2024,
+      "city_id": 1,
+      "slug": "batch-a",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "city": {
+        "id": 1,
+        "city_name": "Mumbai"
+      }
+    }
+  ]
+}
+```
+
+---
+
+#### Create Batch
+```http
+POST /api/superadmin/batches
+```
+
+**Request Body:**
 ```json
 {
   "batch_name": "New Batch",
@@ -155,17 +277,34 @@ Content-Type: application/json
   "city_id": 1
 }
 ```
-- **Response**: 
+
+**Success Response (201):**
 ```json
 {
   "message": "Batch created successfully",
-  "batch": { "id": 2, "batch_name": "New Batch", "year": 2024, "city_id": 1 }
+  "batch": {
+    "id": 3,
+    "batch_name": "New Batch",
+    "year": 2024,
+    "city_id": 1,
+    "slug": "new-batch",
+    "created_at": "2025-02-01T10:30:00.000Z",
+    "updated_at": "2025-02-01T10:30:00.000Z"
+  }
 }
 ```
 
-- **PATCH** `/api/superadmin/batches/:id`
-- **Params**: `id` (batch ID)
-- **Body**: 
+---
+
+#### Update Batch
+```http
+PATCH /api/superadmin/batches/:id
+```
+
+**URL Parameters:**
+- `id` (number) - Batch ID
+
+**Request Body:**
 ```json
 {
   "batch_name": "Updated Batch",
@@ -174,18 +313,26 @@ Content-Type: application/json
 }
 ```
 
-- **DELETE** `/api/superadmin/batches/:id`
-- **Params**: `id` (batch ID)
-- **Response**: 
-```json
-{
-  "message": "Batch deleted successfully"
-}
+---
+
+#### Delete Batch
+```http
+DELETE /api/superadmin/batches/:id
 ```
 
-### Admin Management (Create Teachers/Interns)
-- **POST** `/api/superadmin/admins`
-- **Body**: 
+**URL Parameters:**
+- `id` (number) - Batch ID
+
+---
+
+### Admin Management
+
+#### Create Admin (Teacher/Intern)
+```http
+POST /api/superadmin/admins
+```
+
+**Request Body:**
 ```json
 {
   "name": "Teacher Name",
@@ -195,19 +342,33 @@ Content-Type: application/json
   "role": "TEACHER"
 }
 ```
-- **Response**: 
+
+**Success Response (201):**
 ```json
 {
   "message": "Admin registered successfully",
-  "accessToken": "jwt_token_here",
-  "refreshToken": "refresh_token_here",
-  "user": { "id": 2, "name": "Teacher", "email": "teacher@example.com", "role": "TEACHER" }
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 2,
+    "name": "Teacher Name",
+    "email": "teacher@example.com",
+    "username": "teacher123",
+    "role": "TEACHER"
+  }
 }
 ```
 
+---
+
 ### System Statistics
-- **GET** `/api/superadmin/stats`
-- **Response**: 
+
+#### Get System Stats
+```http
+GET /api/superadmin/stats
+```
+
+**Success Response (200):**
 ```json
 {
   "stats": {
@@ -224,21 +385,66 @@ Content-Type: application/json
 ---
 
 ## 🎓 ADMIN ROUTES (`/api/admin`)
-**Access**: All Admin Roles (SuperAdmin, Teacher, Intern)
-**Authentication**: Required (Bearer Token)
+**🔒 Access**: All Admin Roles (SuperAdmin, Teacher, Intern)  
+**🔐 Authentication**: Required
 
 ### Global Routes (No Batch Context)
 
-#### Cities
-- **GET** `/api/admin/cities`
-- **Response**: Array of all cities
+#### Get All Cities
+```http
+GET /api/admin/cities
+```
 
-#### Batches
-- **GET** `/api/admin/batches`
-- **Response**: Array of all batches
+**Success Response (200):**
+```json
+{
+  "cities": [
+    {
+      "id": 1,
+      "city_name": "Mumbai",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
 
-- **POST** `/api/admin/batches`
-- **Body**: 
+---
+
+#### Get All Batches
+```http
+GET /api/admin/batches
+```
+
+**Success Response (200):**
+```json
+{
+  "batches": [
+    {
+      "id": 1,
+      "batch_name": "Batch A",
+      "year": 2024,
+      "city_id": 1,
+      "slug": "batch-a",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "city": {
+        "id": 1,
+        "city_name": "Mumbai"
+      }
+    }
+  ]
+}
+```
+
+---
+
+#### Create Batch
+```http
+POST /api/admin/batches
+```
+
+**Request Body:**
 ```json
 {
   "batch_name": "New Batch",
@@ -247,146 +453,74 @@ Content-Type: application/json
 }
 ```
 
-#### Topics (Global)
-- **GET** `/api/admin/topics`
-- **Response**: Array of all topics
-```json
-[
-  {
-    "id": 1,
-    "topic_name": "Arrays",
-    "slug": "arrays",
-    "created_at": "2025-01-01T00:00:00.000Z"
-  }
-]
+---
+
+### Topics Management
+
+#### Get All Topics
+```http
+GET /api/admin/topics
 ```
 
-- **POST** `/api/admin/topics`
-- **Access**: Teacher or SuperAdmin only
-- **Body**: 
+**Success Response (200):**
 ```json
 {
-  "topic_name": "New Topic"
-}
-```
-- **Response**: 
-```json
-{
-  "message": "Topic created successfully",
-  "topic": { "id": 2, "topic_name": "New Topic", "slug": "new-topic" }
-}
-```
-
-#### Questions (Global)
-- **GET** `/api/admin/questions`
-- **Query Params**: 
-  - `topic_id` (optional): Filter by topic
-  - `level` (optional): Filter by level (EASY, MEDIUM, HARD)
-  - `platform` (optional): Filter by platform (LEETCODE, GFG, OTHER)
-- **Response**: Array of questions with filters applied
-
-### Workspace Routes (Batch Context)
-**All routes below require**: `batchSlug` parameter
-
-#### Topics for Batch
-- **GET** `/api/admin/:batchSlug/topics`
-- **Params**: `batchSlug` (batch slug)
-- **Response**: Topics assigned to this batch
-
-#### Classes Management
-- **GET** `/api/admin/:batchSlug/topics/:topicSlug/classes`
-- **Params**: `batchSlug`, `topicSlug`
-- **Response**: Classes for this topic in this batch
-
-- **POST** `/api/admin/:batchSlug/topics/:topicSlug/classes`
-- **Access**: Teacher or SuperAdmin only
-- **Body**: 
-```json
-{
-  "class_number": "Class 1",
-  "class_date": "2025-02-01T10:00:00.000Z",
-  "pdf_url": "https://example.com/class1.pdf",
-  "description": "Introduction to Arrays",
-  "duration_minutes": 60
-}
-```
-
-- **GET** `/api/admin/:batchSlug/classes/:classSlug`
-- **Params**: `batchSlug`, `classSlug`
-- **Response**: Single class details with questions
-
-#### Question Assignment
-- **GET** `/api/admin/questions`
-- **Response**: All questions (same as global)
-
-- **POST** `/api/admin/:batchSlug/classes/:classSlug/questions`
-- **Access**: Teacher or SuperAdmin only
-- **Body**: 
-```json
-{
-  "question_ids": [1, 2, 3, 4, 5]
-}
-```
-- **Response**: 
-```json
-{
-  "message": "Questions assigned successfully",
-  "assigned_count": 5
-}
-```
-
-- **DELETE** `/api/admin/:batchSlug/classes/:classSlug/questions/:questionId`
-- **Access**: Teacher or SuperAdmin only
-- **Params**: `batchSlug`, `classSlug`, `questionId`
-- **Response**: 
-```json
-{
-  "message": "Question removed from class successfully"
+  "topics": [
+    {
+      "id": 1,
+      "topic_name": "Arrays",
+      "slug": "arrays",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    }
+  ]
 }
 ```
 
 ---
 
-## 👨‍🎓 STUDENT ROUTES (`/api/student`)
-**Access**: Students only
-**Authentication**: Required (Bearer Token)
+#### Create Topic
+```http
+POST /api/admin/topics
+```
+**🔒 Access**: Teacher or SuperAdmin only
 
-### Profile Management
-- **GET** `/api/student/profile`
-- **Response**: 
+**Request Body:**
 ```json
 {
-  "id": 1,
-  "name": "Student Name",
-  "email": "student@example.com",
-  "username": "student123",
-  "city": { "id": 1, "city_name": "Mumbai" },
-  "batch": { "id": 1, "batch_name": "Batch A", "year": 2024 },
-  "leetcode_id": "leetcode123",
-  "gfg_id": "gfg123",
-  "is_profile_complete": true
+  "topic_name": "New Topic"
 }
 ```
 
-- **PATCH** `/api/student/profile`
-- **Body**: 
+**Success Response (201):**
 ```json
 {
-  "city_id": 1,
-  "batch_id": 1,
-  "leetcode_id": "leetcode123",
-  "gfg_id": "gfg123",
-  "enrollment_id": "ENR001"
+  "message": "Topic created successfully",
+  "topic": {
+    "id": 3,
+    "topic_name": "New Topic",
+    "slug": "new-topic",
+    "created_at": "2025-02-01T10:30:00.000Z",
+    "updated_at": "2025-02-01T10:30:00.000Z"
+  }
 }
 ```
 
-### Assigned Questions
-- **GET** `/api/student/questions`
-- **Query Params**: 
-  - `topic_id` (optional): Filter by topic
-  - `level` (optional): Filter by level
-  - `platform` (optional): Filter by platform
-- **Response**: 
+---
+
+### Questions Management
+
+#### Get All Questions
+```http
+GET /api/admin/questions
+```
+
+**Query Parameters (Optional):**
+- `topic_id` (number) - Filter by topic
+- `level` (string) - Filter by level (EASY, MEDIUM, HARD)
+- `platform` (string) - Filter by platform (LEETCODE, GFG, OTHER)
+
+**Success Response (200):**
 ```json
 {
   "questions": [
@@ -397,222 +531,226 @@ Content-Type: application/json
       "platform": "LEETCODE",
       "level": "EASY",
       "type": "HOMEWORK",
-      "topic": { "topic_name": "Arrays" },
-      "is_solved": true
+      "topic_id": 1,
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "topic": {
+        "id": 1,
+        "topic_name": "Arrays",
+        "slug": "arrays"
+      }
     }
   ]
 }
 ```
 
-- **GET** `/api/student/questions/:questionId`
-- **Params**: `questionId`
-- **Response**: Single question details with solve status
+---
 
-- **GET** `/api/student/classes/:classId/questions`
-- **Params**: `classId`
-- **Response**: Questions for specific class
+### Workspace Routes (Batch Context)
+**📝 All routes below require**: `batchSlug` parameter
 
-### Mark Questions as Solved
-- **POST** `/api/student/questions/:questionId/solve`
-- **Params**: `questionId`
-- **Body**: `{}` (empty or optional metadata)
-- **Response**: 
-```json
-{
-  "message": "Question marked as solved successfully"
-}
+#### Get Topics for Batch
+```http
+GET /api/admin/:batchSlug/topics
 ```
 
-### Progress Tracking
-- **GET** `/api/student/progress`
-- **Response**: 
+**URL Parameters:**
+- `batchSlug` (string) - Batch slug
+
+**Success Response (200):**
 ```json
 {
-  "total_solved": 20,
-  "by_level": { "EASY": 8, "MEDIUM": 10, "HARD": 2 },
-  "by_platform": { "LEETCODE": 15, "GFG": 5 },
-  "by_topic": { "Arrays": 10, "Linked Lists": 5 },
-  "by_type": { "HOMEWORK": 12, "CLASSWORK": 8 }
-}
-```
-
-- **GET** `/api/student/progress/topics`
-- **Response**: 
-```json
-[
-  {
-    "topic_name": "Arrays",
-    "total_questions": 25,
-    "solved": 10,
-    "percentage": 40
-  }
-]
-```
-
-- **GET** `/api/student/progress/levels`
-- **Response**: 
-```json
-{
-  "EASY": { "total": 50, "solved": 30, "percentage": 60 },
-  "MEDIUM": { "total": 40, "solved": 15, "percentage": 37.5 },
-  "HARD": { "total": 10, "solved": 2, "percentage": 20 }
-}
-```
-
-- **GET** `/api/student/progress/recent`
-- **Query Params**: `limit` (optional, default 10)
-- **Response**: 
-```json
-{
-  "recently_solved": [
+  "topics": [
     {
-      "question_name": "Two Sum",
-      "level": "EASY",
-      "solved_at": "2025-02-01T10:30:00.000Z"
+      "id": 1,
+      "topic_name": "Arrays",
+      "slug": "arrays",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
     }
   ]
 }
 ```
 
-### Dashboard
-- **GET** `/api/student/dashboard`
-- **Response**: 
-```json
-{
-  "profile": { "name": "Student", "batch": { "batch_name": "Batch A" }, "city": { "city_name": "Mumbai" } },
-  "stats": {
-    "total_solved": 20,
-    "rank_in_batch": 5,
-    "rank_in_city": 25,
-    "streak": 7
-  },
-  "progress": { "by_level": {...}, "by_topic": {...} },
-  "recent_solved": [...],
-  "upcoming_classes": [...],
-  "pending_questions": [...]
-}
+---
+
+#### Get Classes by Topic
+```http
+GET /api/admin/:batchSlug/topics/:topicSlug/classes
 ```
 
-- **GET** `/api/student/stats`
-- **Response**: 
-```json
-{
-  "total_solved": 20,
-  "rank_in_batch": 5,
-  "rank_in_city": 25,
-  "percentile_in_batch": 90,
-  "streak_days": 7,
-  "last_solved_at": "2025-02-01T10:30:00.000Z"
-}
-```
+**URL Parameters:**
+- `batchSlug` (string) - Batch slug
+- `topicSlug` (string) - Topic slug
 
-### Leaderboard
-- **GET** `/api/student/leaderboard/batch`
-- **Response**: 
-```json
-{
-  "leaderboard": [
-    {
-      "rank": 1,
-      "student": { "name": "Top Student", "username": "top123" },
-      "solved_count": 45
-    },
-    {
-      "rank": 5,
-      "student": { "name": "You", "username": "your123" },
-      "solved_count": 20,
-      "is_me": true
-    }
-  ]
-}
-```
-
-- **GET** `/api/student/leaderboard/city`
-- **Response**: City-wide leaderboard with current student highlighted
-
-- **GET** `/api/student/leaderboard/rank`
-- **Response**: 
-```json
-{
-  "rank_in_batch": 5,
-  "total_in_batch": 50,
-  "rank_in_city": 25,
-  "total_in_city": 200,
-  "percentile_batch": 90,
-  "percentile_city": 87.5
-}
-```
-
-### Classes
-- **GET** `/api/student/classes`
-- **Response**: 
+**Success Response (200):**
 ```json
 {
   "classes": [
     {
       "id": 1,
       "class_number": "Class 1",
-      "topic": { "topic_name": "Arrays" },
-      "class_date": "2025-02-05T10:00:00.000Z",
+      "class_date": "2025-02-01T10:00:00.000Z",
       "pdf_url": "https://example.com/class1.pdf",
-      "total_questions": 10,
-      "solved_questions": 7,
-      "completion_percentage": 70
+      "description": "Introduction to Arrays",
+      "duration_minutes": 60,
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "topic": {
+        "id": 1,
+        "topic_name": "Arrays",
+        "slug": "arrays"
+      }
     }
   ]
 }
 ```
 
-- **GET** `/api/student/classes/:classId`
-- **Params**: `classId`
-- **Response**: Single class details with questions and solve status
+---
 
-### Bookmarks
-- **POST** `/api/student/bookmarks/:questionId`
-- **Params**: `questionId`
-- **Response**: 
+#### Create Class
+```http
+POST /api/admin/:batchSlug/topics/:topicSlug/classes
+```
+**🔒 Access**: Teacher or SuperAdmin only
+
+**URL Parameters:**
+- `batchSlug` (string) - Batch slug
+- `topicSlug` (string) - Topic slug
+
+**Request Body:**
 ```json
 {
-  "message": "Question bookmarked successfully"
+  "class_number": "Class 3",
+  "class_date": "2025-02-15T10:00:00.000Z",
+  "pdf_url": "https://example.com/class3.pdf",
+  "description": "Arrays Problem Solving",
+  "duration_minutes": 75
 }
 ```
 
-- **DELETE** `/api/student/bookmarks/:questionId`
-- **Params**: `questionId`
-- **Response**: 
+**Success Response (201):**
 ```json
 {
-  "message": "Question removed from bookmarks"
+  "message": "Class created successfully",
+  "class": {
+    "id": 3,
+    "class_number": "Class 3",
+    "class_date": "2025-02-15T10:00:00.000Z",
+    "pdf_url": "https://example.com/class3.pdf",
+    "description": "Arrays Problem Solving",
+    "duration_minutes": 75,
+    "topic_id": 1,
+    "batch_id": 1,
+    "created_at": "2025-02-01T10:30:00.000Z",
+    "updated_at": "2025-02-01T10:30:00.000Z"
+  }
 }
 ```
 
-- **GET** `/api/student/bookmarks`
-- **Response**: 
+---
+
+#### Get Class Details
+```http
+GET /api/admin/:batchSlug/classes/:classSlug
+```
+
+**URL Parameters:**
+- `batchSlug` (string) - Batch slug
+- `classSlug` (string) - Class slug
+
+**Success Response (200):**
 ```json
 {
-  "bookmarks": [
-    {
+  "class": {
+    "id": 1,
+    "class_number": "Class 1",
+    "class_date": "2025-02-01T10:00:00.000Z",
+    "pdf_url": "https://example.com/class1.pdf",
+    "description": "Introduction to Arrays",
+    "duration_minutes": 60,
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z",
+    "topic": {
       "id": 1,
-      "question": {
+      "topic_name": "Arrays",
+      "slug": "arrays"
+    },
+    "questions": [
+      {
+        "id": 1,
         "question_name": "Two Sum",
-        "level": "EASY",
+        "question_link": "https://leetcode.com/problems/two-sum/",
         "platform": "LEETCODE",
-        "is_solved": true
-      },
-      "bookmarked_at": "2025-02-01T10:30:00.000Z"
-    }
-  ]
+        "level": "EASY",
+        "type": "HOMEWORK"
+      }
+    ]
+  }
 }
 ```
 
-### Search & Filters
-- **GET** `/api/student/questions/search`
-- **Query Params**: `q` (search term)
-- **Response**: Questions matching search term with solve status
+---
+
+#### Assign Questions to Class
+```http
+POST /api/admin/:batchSlug/classes/:classSlug/questions
+```
+**🔒 Access**: Teacher or SuperAdmin only
+
+**URL Parameters:**
+- `batchSlug` (string) - Batch slug
+- `classSlug` (string) - Class slug
+
+**Request Body:**
+```json
+{
+  "question_ids": [1, 2, 3, 4, 5]
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "message": "Questions assigned successfully",
+  "assigned_count": 5
+}
+```
+
+---
+
+#### Remove Question from Class
+```http
+DELETE /api/admin/:batchSlug/classes/:classSlug/questions/:questionId
+```
+**🔒 Access**: Teacher or SuperAdmin only
+
+**URL Parameters:**
+- `batchSlug` (string) - Batch slug
+- `classSlug` (string) - Class slug
+- `questionId` (number) - Question ID
+
+**Success Response (200):**
+```json
+{
+  "message": "Question removed from class successfully"
+}
+```
+
+---
+
+## 👨‍🎓 STUDENT ROUTES (`/api/student`)
+**🔒 Access**: Students only  
+**🔐 Authentication**: Required
 
 ### Analytics
-- **GET** `/api/student/analytics/weekly`
-- **Response**: Questions solved per day for last 7 days
+
+#### Get Weekly Analytics
+```http
+GET /api/student/analytics/weekly
+```
+
+**Success Response (200):**
 ```json
 {
   "weekly_progress": {
@@ -627,28 +765,55 @@ Content-Type: application/json
 }
 ```
 
-- **GET** `/api/student/analytics/monthly`
-- **Response**: Questions solved per day for last 30 days
+---
 
-### Pending & Upcoming
-- **GET** `/api/student/questions/pending`
-- **Response**: 
+#### Get Monthly Analytics
+```http
+GET /api/student/analytics/monthly
+```
+
+**Success Response (200):**
 ```json
 {
-  "pending_questions": [
-    {
-      "id": 2,
-      "question_name": "Best Time to Buy Stock",
-      "level": "MEDIUM",
-      "is_solved": false
-    }
-  ],
-  "count": 5
+  "monthly_progress": {
+    "2025-01-01": 2,
+    "2025-01-02": 1,
+    "2025-01-03": 3,
+    "...": "30 days of data...",
+    "2025-01-31": 1
+  }
 }
 ```
 
-- **GET** `/api/student/classes/upcoming`
-- **Response**: Upcoming classes (future class_date)
+---
+
+### Classes
+
+#### Get Upcoming Classes
+```http
+GET /api/student/classes/upcoming
+```
+
+**Success Response (200):**
+```json
+{
+  "upcoming_classes": [
+    {
+      "id": 1,
+      "class_number": "Class 1",
+      "class_date": "2025-02-05T10:00:00.000Z",
+      "pdf_url": "https://example.com/class1.pdf",
+      "topic": {
+        "id": 1,
+        "topic_name": "Arrays"
+      },
+      "_count": {
+        "questionVisibility": 10
+      }
+    }
+  ]
+}
+```
 
 ---
 
@@ -662,28 +827,139 @@ Content-Type: application/json
 ```
 
 ### Common HTTP Status Codes
-- `200` - Success
-- `201` - Created successfully
-- `400` - Bad request (missing/invalid data)
-- `401` - Unauthorized (invalid/missing token)
-- `403` - Forbidden (insufficient permissions)
-- `404` - Not found
-- `500` - Internal server error
+- `200` - ✅ Success
+- `201` - ✅ Created successfully  
+- `400` - ❌ Bad request (missing/invalid data)
+- `401` - ❌ Unauthorized (invalid/missing token)
+- `403` - ❌ Forbidden (insufficient permissions)
+- `404` - ❌ Not found
+- `500` - ❌ Internal server error
+
+### Error Examples
+
+#### Authentication Error
+```json
+{
+  "error": "Invalid token"
+}
+```
+
+#### Permission Error
+```json
+{
+  "error": "Insufficient permissions"
+}
+```
+
+#### Validation Error
+```json
+{
+  "error": "City name is required"
+}
+```
 
 ---
 
-## 🔑 Role Hierarchy
+## 🔑 Role Hierarchy & Permissions
 
-1. **SUPERADMIN** - Full system access
-2. **TEACHER** - Can manage topics, questions, classes
-3. **INTERN** - Limited admin access
-4. **STUDENT** - Can view progress, solve questions, bookmark
+### Role Access Levels
+
+| Role | Cities | Batches | Topics | Questions | Classes | Students |
+|------|--------|---------|--------|-----------|---------|----------|
+| **SUPERADMIN** | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ View |
+| **TEACHER** | ❌ | ❌ | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ View |
+| **INTERN** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ View |
+| **STUDENT** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ Own |
+
+**Legend:**
+- ✅ CRUD = Create, Read, Update, Delete
+- ✅ View = Read-only access
+- ❌ = No access
 
 ---
 
-## 📱 Usage Examples
+## 📱 Frontend Implementation Guide
 
-### 1. SuperAdmin creates city
+### Quick Start Steps
+
+1. **Authentication Setup**
+   ```javascript
+   // Login and store tokens
+   const login = async (email, password) => {
+     const response = await fetch('/api/auth/admin/login', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ email, password })
+     });
+     const data = await response.json();
+     localStorage.setItem('accessToken', data.accessToken);
+     return data;
+   };
+   ```
+
+2. **API Client Setup**
+   ```javascript
+   const apiClient = {
+     get: (url) => fetch(url, {
+       headers: {
+         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+         'Content-Type': 'application/json'
+       }
+     }),
+     post: (url, body) => fetch(url, {
+       method: 'POST',
+       headers: {
+         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+         'Content-Type': 'application/json'
+       },
+       body: JSON.stringify(body)
+     })
+   };
+   ```
+
+3. **Error Handling**
+   ```javascript
+   const handleApiError = (response) => {
+     if (response.status === 401) {
+       // Redirect to login
+       window.location.href = '/login';
+     } else if (response.status === 403) {
+       // Show permission error
+       alert('You don\'t have permission for this action');
+     }
+   };
+   ```
+
+### Required UI Components
+
+1. **Authentication Forms**
+   - Login form (email/password)
+   - Registration form (students)
+
+2. **Admin Dashboard**
+   - Cities management (CRUD)
+   - Batches management (CRUD)
+   - Topics management (CRUD)
+   - Questions management
+   - Class creation and assignment
+
+3. **Student Dashboard**
+   - Analytics charts
+   - Upcoming classes
+   - Progress tracking
+
+### State Management Tips
+
+- Store user info and tokens securely
+- Implement automatic token refresh
+- Cache frequently accessed data
+- Handle loading states properly
+
+---
+
+## 🚀 Usage Examples
+
+### SuperAdmin Creates City
 ```bash
 curl -X POST http://localhost:5000/api/superadmin/cities \
   -H "Authorization: Bearer SUPERADMIN_TOKEN" \
@@ -691,7 +967,7 @@ curl -X POST http://localhost:5000/api/superadmin/cities \
   -d '{"city_name": "Pune"}'
 ```
 
-### 2. Teacher creates topic
+### Teacher Creates Topic
 ```bash
 curl -X POST http://localhost:5000/api/admin/topics \
   -H "Authorization: Bearer TEACHER_TOKEN" \
@@ -699,33 +975,56 @@ curl -X POST http://localhost:5000/api/admin/topics \
   -d '{"topic_name": "Dynamic Programming"}'
 ```
 
-### 3. Student solves question
+### Teacher Creates Class
 ```bash
-curl -X POST http://localhost:5000/api/student/questions/123/solve \
-  -H "Authorization: Bearer STUDENT_TOKEN" \
-  -d '{}'
+curl -X POST http://localhost:5000/api/admin/batch-a/topics/arrays/classes \
+  -H "Authorization: Bearer TEACHER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "class_number": "Class 1",
+    "class_date": "2025-02-01T10:00:00.000Z",
+    "pdf_url": "https://example.com/class1.pdf",
+    "description": "Introduction to Arrays",
+    "duration_minutes": 60
+  }'
 ```
 
-### 4. Get student progress
+### Assign Questions to Class
 ```bash
-curl -X GET http://localhost:5000/api/student/progress \
-  -H "Authorization: Bearer STUDENT_TOKEN"
+curl -X POST http://localhost:5000/api/admin/batch-a/classes/class-1/questions \
+  -H "Authorization: Bearer TEACHER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question_ids": [1, 2, 3, 4, 5]}'
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 📋 Implementation Checklist
 
-1. **Create SuperAdmin**: `POST /api/auth/admin/login` with existing SuperAdmin credentials
-2. **Create Cities**: `POST /api/superadmin/cities`
-3. **Create Batches**: `POST /api/superadmin/batches`
-4. **Create Teachers**: `POST /api/superadmin/admins` with `role: "TEACHER"`
-5. **Create Topics**: `POST /api/admin/topics` (Teacher+)
-6. **Create Questions**: `POST /api/admin/questions` (Teacher+)
-7. **Create Classes**: `POST /api/admin/:batchSlug/topics/:topicSlug/classes`
-8. **Assign Questions**: `POST /api/admin/:batchSlug/classes/:classSlug/questions`
-9. **Students Solve**: `POST /api/student/questions/:questionId/solve`
+### ✅ Completed Features
+- [x] Authentication (Login/Registration)
+- [x] SuperAdmin: Cities CRUD
+- [x] SuperAdmin: Batches CRUD  
+- [x] SuperAdmin: Admin creation
+- [x] Admin: Topics CRUD
+- [x] Admin: Questions viewing
+- [x] Admin: Classes CRUD
+- [x] Admin: Question assignment
+- [x] Student: Basic analytics
+- [x] Student: Upcoming classes
+
+### 🚧 Coming Soon (Not Implemented)
+- [ ] Student profile management
+- [ ] Student question solving
+- [ ] Student progress tracking
+- [ ] Leaderboard system
+- [ ] Bookmark functionality
+- [ ] Advanced analytics
+- [ ] Search functionality
 
 ---
 
-*API Documentation Complete* 🎉
+*📖 This documentation covers all currently implemented API endpoints. For any questions or issues, contact the backend team.*
+
+**Last Updated**: February 2025  
+**API Version**: 1.0.0

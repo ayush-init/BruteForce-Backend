@@ -6,7 +6,6 @@ import { isSuperAdmin } from "../middlewares/role.middleware";
 import { 
   createCity, 
   getAllCities, 
-  //getCityById,
   updateCity,
   deleteCity
 } from "../controllers/admin/city.controller";
@@ -17,10 +16,6 @@ import {
   deleteBatch,
   getAllBatches,
   updateBatch, 
- // getAllBatches,
-  //getBatchById,
-  //updateBatch,
-  //deleteBatch
 } from "../controllers/admin/batch.controller";
 
 // Admin management
