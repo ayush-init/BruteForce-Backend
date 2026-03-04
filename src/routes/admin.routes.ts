@@ -27,6 +27,10 @@ import { upload } from "../middlewares/upload.middleware";
 import { bulkUploadQuestions } from "../controllers/admin/questionBulk.controller";
 import { updateStudentDetails, deleteStudentDetails }  from "../controllers/admin/student.controller"
 import { getAllStudentsController, getStudentReportController, addStudentProgressController, createStudentController }  from "../controllers/admin/student.controller"
+import { getAllStudentsController, getStudentReportController }  from "../controllers/admin/student.controller"
+import { createStudentController }  from "../controllers/admin/student.controller"
+import { testLeetcode, testGfg } from "../controllers/test.controller";
+import { manualSync } from "../controllers/admin/progress.controller";
 // import {
 //   getStudentsForBatch,
 //   getStudentReport,
@@ -58,9 +62,8 @@ router.post("/topics", isTeacherOrAbove, createTopic);
 router.patch("/topics/:id", isTeacherOrAbove, updateTopic);
 router.delete("/topics/:id", isTeacherOrAbove, deleteTopic);
 router.post(  "/topics/bulk",  isTeacherOrAbove,  createTopicsBulk);
-/* ==========================================
-   WORKSPACE ROUTES (BATCH CONTEXT)
-========================================= */
+
+  //  WORKSPACE ROUTES (BATCH CONTEXT)
 // questions gloabal 
 router.post("/questions", isTeacherOrAbove, createQuestion);
 
@@ -82,6 +85,13 @@ router.post(
   bulkUploadQuestions
 );
 
+/* ---------- Students ---------- */
+
+// router.get("/students", getStudentsForBatch);
+// + count of solved + streak + + all filters city wise + batch wise 
+// router.get("students/:username", getStudentReport);
+// total solved  + hard + easy + medium + + topic wise how much + 
+
 
 // Student CRUD
 // Update
@@ -96,6 +106,14 @@ router.get("/students/:username", getStudentReportController);
 router.post("/students", isTeacherOrAbove,createStudentController);
 
 router.post( "/students/progress", isTeacherOrAbove, isAdmin, addStudentProgressController);
+
+
+router.get("/test/leetcode/:username", testLeetcode);
+router.get("/test/gfg/:username", testGfg);
+router.post("/students/sync/:id", manualSync);
+
+
+
 // Everything below requires valid batchSlug
 router.use("/:batchSlug", resolveBatch);
 
@@ -137,10 +155,6 @@ router.delete(
   isTeacherOrAbove,
   deleteClass
 );
-
-/* ---------- Assign Questions ---------- */
-
-
 
 
 // batch wise class wise question assign
