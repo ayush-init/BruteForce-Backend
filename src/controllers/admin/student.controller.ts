@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { addStudentProgressService } from "../../services/student.service";
 import {
     updateStudentDetailsService,
     deleteStudentDetailsService,
@@ -124,5 +125,41 @@ export const createStudentController = async (req: Request, res: Response) => {
         return res.status(400).json({
             message: error.message
         });
+    }
+};
+
+
+
+
+export const addStudentProgressController = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+
+        const { student_id, question_id } = req.body;
+
+        if (!student_id || !question_id) {
+            return res.status(400).json({
+                message: "student_id and question_id are required"
+            });
+        }
+
+        const progress = await addStudentProgressService(
+            Number(student_id),
+            Number(question_id)
+        );
+
+        return res.status(201).json({
+            message: "Student progress added successfully",
+            data: progress
+        });
+
+    } catch (error: any) {
+
+        return res.status(400).json({
+            message: error.message
+        });
+
     }
 };
