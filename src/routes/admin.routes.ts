@@ -58,9 +58,8 @@ router.post("/topics", isTeacherOrAbove, createTopic);
 router.patch("/topics/:id", isTeacherOrAbove, updateTopic);
 router.delete("/topics/:id", isTeacherOrAbove, deleteTopic);
 router.post(  "/topics/bulk",  isTeacherOrAbove,  createTopicsBulk);
-/* ==========================================
-   WORKSPACE ROUTES (BATCH CONTEXT)
-========================================= */
+
+  //  WORKSPACE ROUTES (BATCH CONTEXT)
 // questions gloabal 
 router.post("/questions", isTeacherOrAbove, createQuestion);
 
@@ -81,6 +80,13 @@ router.post(
   upload.single("file"),
   bulkUploadQuestions
 );
+
+/* ---------- Students ---------- */
+
+// router.get("/students", getStudentsForBatch);
+// + count of solved + streak + + all filters city wise + batch wise 
+// router.get("students/:username", getStudentReport);
+// total solved  + hard + easy + medium + + topic wise how much + 
 
 
 // Everything below requires valid batchSlug
@@ -125,10 +131,6 @@ router.delete(
   deleteClass
 );
 
-/* ---------- Assign Questions ---------- */
-
-
-
 
 // batch wise class wise question assign
 
@@ -150,10 +152,7 @@ router.delete(
 );
 
 
-/* ---------- Students ---------- */
 
-// router.get("/:batchSlug/students", getStudentsForBatch);
-// router.get("/:batchSlug/students/:studentId", getStudentReport);
 
 // /* ---------- Analytics ---------- */
 
