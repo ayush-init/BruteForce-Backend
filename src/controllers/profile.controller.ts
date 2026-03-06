@@ -26,7 +26,6 @@ export const completeProfile = async (req: Request, res: Response) => {
         batch_id,
         leetcode_id,
         gfg_id,
-        is_profile_complete: true,
       },
     });
 

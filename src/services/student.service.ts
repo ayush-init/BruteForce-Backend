@@ -308,34 +308,7 @@ export const updateStudentDetailsService = async (id: number, body: any) => {
             throw new Error("Student not found");
         }
 
-        const {
-            name,
-            email,
-            username,
-            google_id,
-            provider,
-            enrollment_id,
-            city_id,
-            batch_id,
-            leetcode_id,
-            gfg_id,
-            is_profile_complete
-        } = body;
-
-        const updateData: any = {};
-
-        if (name !== undefined) updateData.name = name;
-        if (email !== undefined) updateData.email = email;
-        if (username !== undefined) updateData.username = username;
-        if (google_id !== undefined) updateData.google_id = google_id;
-        if (provider !== undefined) updateData.provider = provider;
-        if (enrollment_id !== undefined) updateData.enrollment_id = enrollment_id;
-        if (city_id !== undefined) updateData.city_id = city_id;
-        if (batch_id !== undefined) updateData.batch_id = batch_id;
-        if (leetcode_id !== undefined) updateData.leetcode_id = leetcode_id;
-        if (gfg_id !== undefined) updateData.gfg_id = gfg_id;
-        if (is_profile_complete !== undefined)
-            updateData.is_profile_complete = is_profile_complete;
+        const updateData: any = { ...body };
 
         const updatedStudent = await prisma.student.update({
             where: { id },

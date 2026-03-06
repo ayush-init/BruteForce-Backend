@@ -53,7 +53,6 @@ model Student {
   gfg_total_solved    Int               @default(0)
   last_synced_at      DateTime?
   lc_total_solved     Int               @default(0)
-  bookmarks           Bookmark[]
   leaderboards        Leaderboard?
   batch               Batch?            @relation(fields: [batch_id], references: [id])
   city                City?             @relation(fields: [city_id], references: [id])
@@ -93,9 +92,7 @@ model Topic {
   updated_at  DateTime @updatedAt
 
   classes     Class[]
-  questionVisibility QuestionVisibility[]
-
-  @@index([order])
+  questions    Question[]
 }
 
 model Question {
@@ -107,7 +104,6 @@ model Question {
   type          QuestionType         @default(HOMEWORK)
   topic_id      Int
   created_at    DateTime             @default(now())
-  bookmarks     Bookmark[]
   topic         Topic                @relation(fields: [topic_id], references: [id], onDelete: Cascade)
   visibility    QuestionVisibility[]
   progress      StudentProgress[]
@@ -161,18 +157,6 @@ model StudentProgress {
   @@unique([student_id, question_id])
   @@index([student_id])
   @@index([question_id])
-}
-
-model Bookmark {
-  id          Int      @id @default(autoincrement())
-  student_id  Int
-  question_id Int
-  created_at  DateTime @default(now())
-  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
-  student     Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
-
-  @@unique([student_id, question_id])
-  @@index([student_id])
 }
 
 model Leaderboard {
