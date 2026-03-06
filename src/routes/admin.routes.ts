@@ -21,13 +21,17 @@ import {  createQuestion, deleteQuestion, getAllQuestions,  updateQuestion } fro
 import { assignQuestionsToClass, getAssignedQuestionsOfClass, removeQuestionFromClass } from "../controllers/admin/questionVisibility.controller";
 import { upload } from "../middlewares/upload.middleware";
 import { bulkUploadQuestions } from "../controllers/admin/questionBulk.controller";
-import { updateStudentDetails, deleteStudentDetails }  from "../controllers/admin/student.controller"
-import { getAllStudentsController, getStudentReportController, addStudentProgressController, createStudentController }  from "../controllers/admin/student.controller"
+import { updateStudentDetails, deleteStudentDetails } from "../controllers/admin/student.controller"
+import { getAllStudentsController, getStudentReportController, addStudentProgressController, createStudentController } from "../controllers/admin/student.controller"
 import { testLeetcode, testGfg } from "../controllers/test.controller";
 import { manualSync } from "../controllers/admin/progress.controller";
 import { getDashboardController } from "../controllers/admin/dashboard.controller";
 import { getAssignedQuestionsController } from "../controllers/admin/question.controller";
-
+import { getLeaderboard, getLeaderboardPost, recalculateLeaderboard } from "../controllers/admin/leaderboard.controller";
+// import {
+//   getStudentsForBatch,
+//   getStudentReport,
+// } from "../controllers/admin/student.controller";
 
 const router = Router();
 
@@ -55,9 +59,9 @@ router.get("/topics", getAllTopics);
 router.post("/topics", isTeacherOrAbove, createTopic);
 router.patch("/topics/:id", isTeacherOrAbove, updateTopic);
 router.delete("/topics/:id", isTeacherOrAbove, deleteTopic);
-router.post(  "/topics/bulk",  isTeacherOrAbove,  createTopicsBulk);
+router.post("/topics/bulk", isTeacherOrAbove, createTopicsBulk);
 
-  //  WORKSPACE ROUTES (BATCH CONTEXT)
+//  WORKSPACE ROUTES (BATCH CONTEXT)
 // questions gloabal 
 router.post("/questions", isTeacherOrAbove, createQuestion);
 
@@ -86,16 +90,22 @@ router.post(
 
 router.get("/dashboard", getDashboardController);
 
+// Leaderboard
+router.get("/leaderboard",verifyToken, isAdmin, getLeaderboard);
+router.post("/leaderboard", verifyToken, isAdmin, getLeaderboardPost);
+
+router.post("/leaderboard/recalculate", verifyToken,isAdmin,recalculateLeaderboard);
+
 router.get("/questions", getAssignedQuestionsController);
 
 router.patch("/students/:id",isTeacherOrAbove,isAdmin,updateStudentDetails);
 
 // Delete (Hard Delete)
-router.delete( "/students/:id",isTeacherOrAbove,isAdmin,deleteStudentDetails);
+router.delete("/students/:id", isTeacherOrAbove, isAdmin, deleteStudentDetails);
 
 router.get("/students", getAllStudentsController);
 router.get("/students/:username", getStudentReportController);
-router.post("/students", isTeacherOrAbove,createStudentController);
+router.post("/students", isTeacherOrAbove, createStudentController);
 
 router.post( "/students/progress", isTeacherOrAbove, isAdmin, addStudentProgressController);
 router.get("/test/leetcode/:username", testLeetcode);

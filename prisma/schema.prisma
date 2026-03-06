@@ -18,8 +18,8 @@ model City {
 }
 
 model Batch {
-  id         Int      @id @default(autoincrement())
-  batch_name String   @db.VarChar(50)
+  id         Int       @id @default(autoincrement())
+  batch_name String    @db.VarChar(50)
   year       Int
   city_id    Int
   slug       String   @unique @db.VarChar(80)
@@ -35,28 +35,27 @@ model Batch {
 }
 
 model Student {
-  id            Int     @id @default(autoincrement())
-  name          String  @db.VarChar(100)
-  email         String  @unique @db.VarChar(150)
-  username      String  @unique @db.VarChar(100)
-  password_hash String?
-  google_id     String? @unique @db.VarChar(100)
-  enrollment_id String? @unique @db.VarChar(100)
-  city_id       Int?
-  batch_id      Int?
-  leetcode_id   String? @db.VarChar(100)
-  gfg_id        String? @db.VarChar(100)
-
-  lc_total_solved  Int       @default(0)
-  gfg_total_solved Int       @default(0)
-  last_synced_at   DateTime?
-
+  id                  Int               @id @default(autoincrement())
+  name                String            @db.VarChar(100)
+  email               String            @unique @db.VarChar(150)
+  username            String            @unique @db.VarChar(100)
+  password_hash       String?
+  google_id           String?           @unique @db.VarChar(100)
+  enrollment_id       String?           @unique @db.VarChar(100)
+  city_id             Int?
+  batch_id            Int?
+  leetcode_id         String?           @db.VarChar(100)
+  gfg_id              String?           @db.VarChar(100)
   is_profile_complete Boolean           @default(false)
   created_at          DateTime          @default(now())
   updated_at          DateTime          @updatedAt
   provider            String            @default("google")
   refresh_token       String?
+  gfg_total_solved    Int               @default(0)
+  last_synced_at      DateTime?
+  lc_total_solved     Int               @default(0)
   bookmarks           Bookmark[]
+  leaderboards        Leaderboard?
   batch               Batch?            @relation(fields: [batch_id], references: [id])
   city                City?             @relation(fields: [city_id], references: [id])
   progress            StudentProgress[]
@@ -114,19 +113,18 @@ model Question {
 }
 
 model Class {
-  id               Int       @id @default(autoincrement())
-  topic_id         Int
-  batch_id         Int
-  class_name       String    @db.VarChar(50)
-  slug             String    @db.VarChar(150)
-  pdf_url          String?   @db.Text
-  description      String?   @db.Text
-  duration_minutes Int?
-  class_date       DateTime?
-  created_at       DateTime  @default(now())
-
-  topic              Topic                @relation(fields: [topic_id], references: [id], onDelete: Cascade)
+  id                 Int                  @id @default(autoincrement())
+  topic_id           Int
+  batch_id           Int
+  pdf_url            String?
+  description        String?
+  duration_minutes   Int?
+  class_date         DateTime?
+  created_at         DateTime             @default(now())
+  class_name         String               @db.VarChar(50)
+  slug               String               @db.VarChar(150)
   batch              Batch                @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  topic              Topic                @relation(fields: [topic_id], references: [id], onDelete: Cascade)
   questionVisibility QuestionVisibility[]
 
   @@unique([topic_id, batch_id, slug])
@@ -140,9 +138,8 @@ model QuestionVisibility {
   class_id    Int
   question_id Int
   assigned_at DateTime @default(now())
-
-  class    Class    @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  class       Class    @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   @@unique([class_id, question_id])
   @@index([question_id])
@@ -153,9 +150,8 @@ model StudentProgress {
   student_id  Int
   question_id Int
   solved_at   DateTime @default(now())
-
-  student  Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
   @@unique([student_id, question_id])
   @@index([student_id])
@@ -167,19 +163,29 @@ model Bookmark {
   student_id  Int
   question_id Int
   created_at  DateTime @default(now())
-
-  student  Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
   @@unique([student_id, question_id])
   @@index([student_id])
 }
 
+model Leaderboard {
+  id           Int      @id @default(autoincrement())
+  student_id   Int      @unique
+  max_streak   Int      @default(0)
+  updated_at   DateTime @updatedAt
+  easy_count   Int      @default(0)
+  hard_count   Int      @default(0)
+  medium_count Int      @default(0)
+  student      Student  @relation(fields: [student_id], references: [id])
+}
+
 enum Platform {
   LEETCODE
   GFG
-  INTERVIEWBIT
   OTHER
+  INTERVIEWBIT
 }
 
 enum Level {
