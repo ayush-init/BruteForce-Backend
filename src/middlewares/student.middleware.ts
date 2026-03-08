@@ -3,6 +3,7 @@ import { AccessTokenPayload } from "../utils/jwt.util";
 
 export interface StudentRequest extends Request {
   student?: AccessTokenPayload;  // 🔑 Added student property
+  studentId?: number;           // 🔑 Add studentId property
   batchId?: number;
   batchName?: string;
   batchSlug?: string;

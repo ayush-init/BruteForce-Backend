@@ -34,18 +34,21 @@ router.get("/cities", getAllCities);
 router.patch("/cities/:id", updateCity);
 router.delete("/cities/:id", deleteCity);
 
+
 // ===== BATCH =====
 router.post("/batches", createBatch);
 router.get("/batches", getAllBatches);
 router.patch("/batches/:id", updateBatch);
 router.delete("/batches/:id", deleteBatch);
 
+
+
 // ===== ADMIN =====
 
 
 
 // ===== ADMIN MANAGEMENT (Create Teachers/Interns) =====
-router.post("/admins", registerAdmin);
+router.post("/admins", registerAdmin);                            // not working
 // router.get("/admins", getAllAdmins);
 // router.patch("/admins/:id", updateAdmin);
 // router.delete("/admins/:id", deleteAdmin);

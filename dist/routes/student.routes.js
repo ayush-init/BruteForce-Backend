@@ -1,0 +1,33 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const student_middleware_1 = require("../middlewares/student.middleware");
+const topic_controller_1 = require("../controllers/topic.controller");
+const class_controller_1 = require("../controllers/class.controller");
+const questionVisibility_controller_1 = require("../controllers/questionVisibility.controller");
+const leaderboard_controller_1 = require("../controllers/leaderboard.controller");
+const studentProfile_controller_1 = require("../controllers/studentProfile.controller");
+const router = (0, express_1.Router)();
+// All routes require authentication + STUDENT role + student info extraction
+router.use(auth_middleware_1.verifyToken, role_middleware_1.isStudent, student_middleware_1.extractStudentInfo);
+// ===== TOPICS ROUTES =====
+router.get("/topics", topic_controller_1.getTopicsWithBatchProgress); // All topics with batch-specific classes, total questions per batch, and topic-specific solved question count (frontend will calculate progress percentage)
+router.get("/topics/:topicSlug", topic_controller_1.getTopicOverviewWithClassesSummary); // Topic overview with classes summary (name, duration, totalQuestions, solvedQuestions)
+// ===== CLASSES ROUTES =====
+router.get("/topics/:topicSlug/classes/:classSlug", class_controller_1.getClassDetailsWithFullQuestions); // Class details with full questions array & progress
+// ===== Global  QUESTIONS ROUTES =====
+router.get("/addedQuestions", questionVisibility_controller_1.getAllQuestionsWithFilters); // All questions with filters and solved status
+// ===== LEADERBOARD ROUTES =====
+router.post("/leaderboard", leaderboard_controller_1.getStudentLeaderboard); // Single student leaderboard with top 10 and personal rank
+// ===== PROFILE ROUTES =====
+router.get("/profile", studentProfile_controller_1.getStudentProfile); // Complete student profile with all sections
+router.get("/test/basic", studentProfile_controller_1.testStudentBasicInfo);
+router.get("/test/stats", studentProfile_controller_1.testCodingStats);
+router.get("/test/streak", studentProfile_controller_1.testStreak);
+router.get("/test/leaderboard", studentProfile_controller_1.testLeaderboard);
+router.get("/test/heatmap", studentProfile_controller_1.testHeatmap);
+router.get("/test/topic", studentProfile_controller_1.testTopicProgress);
+router.get("/test/activity", studentProfile_controller_1.testRecentActivity);
+exports.default = router;

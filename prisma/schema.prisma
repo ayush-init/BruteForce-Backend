@@ -46,6 +46,8 @@ model Student {
   batch_id            Int?
   leetcode_id         String?           @db.VarChar(100)
   gfg_id              String?           @db.VarChar(100)
+  github              String?           @db.VarChar(100)
+  linkedin            String?           @db.VarChar(150)
   created_at          DateTime          @default(now())
   updated_at          DateTime          @updatedAt
   provider            String            @default("google")

@@ -1,0 +1,405 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.addStudentProgressService = exports.createStudentService = exports.deleteStudentDetailsService = exports.updateStudentDetailsService = exports.getStudentReportService = exports.getAllStudentsService = void 0;
+const prisma_1 = __importDefault(require("../config/prisma"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const client_1 = require("@prisma/client");
+// ==============================
+// GET ALL STUDENTS
+// ==============================
+const getAllStudentsService = async (query) => {
+    try {
+        const { search, city, batchSlug, sortBy = "created_at", order = "desc" } = query;
+        const where = {};
+        // search filter
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+                { username: { contains: search, mode: "insensitive" } },
+            ];
+        }
+        // city filter
+        if (city) {
+            where.city = {
+                slug: city,
+            };
+        }
+        // batch filter
+        if (batchSlug) {
+            where.batch = {
+                slug: batchSlug,
+            };
+        }
+        // dynamic sorting
+        let orderBy = {
+            [sortBy]: order === "asc" ? "asc" : "desc"
+        };
+        // special case → total solved questions
+        if (sortBy === "totalSolved") {
+            orderBy = {
+                progress: {
+                    _count: order === "asc" ? "asc" : "desc"
+                }
+            };
+        }
+        const students = await prisma_1.default.student.findMany({
+            where,
+            include: {
+                city: true,
+                batch: true,
+                _count: {
+                    select: {
+                        progress: true
+                    }
+                }
+            },
+            orderBy
+        });
+        const formatted = students.map((student) => ({
+            id: student.id,
+            name: student.name,
+            email: student.email,
+            username: student.username,
+            city: student.city?.city_name || null,
+            batch: student.batch?.batch_name || null,
+            totalSolved: student._count.progress,
+            created_at: student.created_at
+        }));
+        return formatted;
+    }
+    catch (error) {
+        throw new Error("Failed to fetch students");
+    }
+};
+exports.getAllStudentsService = getAllStudentsService;
+// ==============================
+// GET STUDENT REPORT
+// ==============================
+const getStudentReportService = async (username) => {
+    try {
+        const student = await prisma_1.default.student.findUnique({
+            where: { username },
+            include: {
+                city: true,
+                batch: true,
+                progress: {
+                    include: {
+                        question: {
+                            select: {
+                                id: true,
+                                platform: true,
+                                level: true,
+                                type: true,
+                                topic_id: true,
+                                topic: {
+                                    select: {
+                                        topic_name: true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    orderBy: { sync_at: "desc" },
+                    take: 5
+                }
+            }
+        });
+        if (!student) {
+            throw new Error("Student not found");
+        }
+        const [solvedQuestions, batchQuestions, topics] = await Promise.all([
+            // solved questions by student
+            prisma_1.default.studentProgress.findMany({
+                where: { student_id: student.id },
+                include: {
+                    question: {
+                        select: {
+                            id: true,
+                            platform: true,
+                            level: true,
+                            type: true,
+                            topic_id: true
+                        }
+                    }
+                }
+            }),
+            // questions assigned to this batch
+            prisma_1.default.question.findMany({
+                where: {
+                    visibility: {
+                        some: {
+                            class: {
+                                batch_id: student.batch_id || undefined
+                            }
+                        }
+                    }
+                },
+                select: {
+                    id: true,
+                    topic_id: true
+                }
+            }),
+            prisma_1.default.topic.findMany({
+                select: {
+                    id: true,
+                    topic_name: true
+                }
+            })
+        ]);
+        // ---------- stats calculation ----------
+        let totalSolved = solvedQuestions.length;
+        const platformStats = {
+            leetcode: {
+                total: 0,
+                easy: 0,
+                medium: 0,
+                hard: 0,
+                homework: 0,
+                classwork: 0
+            },
+            gfg: {
+                total: 0,
+                easy: 0,
+                medium: 0,
+                hard: 0,
+                homework: 0,
+                classwork: 0
+            }
+        };
+        const difficultyStats = {
+            easy: 0,
+            medium: 0,
+            hard: 0
+        };
+        const typeStats = {
+            homework: 0,
+            classwork: 0
+        };
+        const solvedTopicMap = {};
+        const totalTopicMap = {};
+        // solved stats
+        solvedQuestions.forEach(s => {
+            const q = s.question;
+            const platform = q.platform === "LEETCODE" ? "leetcode" :
+                q.platform === "GFG" ? "gfg" : null;
+            if (platform) {
+                platformStats[platform].total++;
+                if (q.level === "EASY")
+                    platformStats[platform].easy++;
+                if (q.level === "MEDIUM")
+                    platformStats[platform].medium++;
+                if (q.level === "HARD")
+                    platformStats[platform].hard++;
+                if (q.type === "HOMEWORK")
+                    platformStats[platform].homework++;
+                if (q.type === "CLASSWORK")
+                    platformStats[platform].classwork++;
+            }
+            // existing global stats
+            if (q.level === "EASY")
+                difficultyStats.easy++;
+            if (q.level === "MEDIUM")
+                difficultyStats.medium++;
+            if (q.level === "HARD")
+                difficultyStats.hard++;
+            if (q.type === "HOMEWORK")
+                typeStats.homework++;
+            if (q.type === "CLASSWORK")
+                typeStats.classwork++;
+            solvedTopicMap[q.topic_id] =
+                (solvedTopicMap[q.topic_id] || 0) + 1;
+        });
+        // total questions per topic
+        batchQuestions.forEach(q => {
+            totalTopicMap[q.topic_id] =
+                (totalTopicMap[q.topic_id] || 0) + 1;
+        });
+        const topicStats = Object.keys(totalTopicMap).map(topicId => {
+            const topic = topics.find(t => t.id === Number(topicId));
+            return {
+                topic: topic?.topic_name || "Unknown",
+                totalQuestions: totalTopicMap[Number(topicId)],
+                solvedByStudent: solvedTopicMap[Number(topicId)] || 0
+            };
+        });
+        return {
+            student: {
+                id: student.id,
+                name: student.name,
+                email: student.email,
+                city: student.city?.city_name,
+                batch: {
+                    batch_name: student.batch?.batch_name,
+                    year: student.batch?.year
+                },
+                created_at: student.created_at
+            },
+            stats: {
+                totalSolved,
+                platforms: platformStats,
+                difficulty: difficultyStats,
+                type: typeStats,
+                topicStats
+            },
+            recentActivity: student.progress
+        };
+    }
+    catch (error) {
+        throw new Error("Failed to fetch student report");
+    }
+};
+exports.getStudentReportService = getStudentReportService;
+// ==============================
+// UPDATE STUDENT
+// ==============================
+const updateStudentDetailsService = async (id, body) => {
+    try {
+        const student = await prisma_1.default.student.findUnique({
+            where: { id }
+        });
+        if (!student) {
+            throw new Error("Student not found");
+        }
+        const updateData = { ...body };
+        const updatedStudent = await prisma_1.default.student.update({
+            where: { id },
+            data: updateData
+        });
+        return updatedStudent;
+    }
+    catch (error) {
+        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2002") {
+                throw new Error("Email, Username or Enrollment ID already exists");
+            }
+            if (error.code === "P2003") {
+                throw new Error("Invalid city or batch reference");
+            }
+        }
+        throw new Error("Failed to update student");
+    }
+};
+exports.updateStudentDetailsService = updateStudentDetailsService;
+// ==============================
+// DELETE STUDENT
+// ==============================
+const deleteStudentDetailsService = async (id) => {
+    try {
+        const student = await prisma_1.default.student.findUnique({
+            where: { id }
+        });
+        if (!student) {
+            throw new Error("Student not found");
+        }
+        await prisma_1.default.student.delete({
+            where: { id }
+        });
+        return true;
+    }
+    catch (error) {
+        throw new Error("Failed to delete student");
+    }
+};
+exports.deleteStudentDetailsService = deleteStudentDetailsService;
+// ==============================
+// CREATE STUDENT
+// ==============================
+const createStudentService = async (data) => {
+    try {
+        const { name, email, username, password, enrollment_id, batch_id, leetcode_id, gfg_id } = data;
+        // batch exist check karo
+        const batch = await prisma_1.default.batch.findUnique({
+            where: { id: batch_id },
+            select: {
+                id: true,
+                city_id: true
+            }
+        });
+        if (!batch) {
+            throw new Error("Batch not found");
+        }
+        let password_hash = null;
+        if (password) {
+            password_hash = await bcryptjs_1.default.hash(password, 10);
+        }
+        const student = await prisma_1.default.student.create({
+            data: {
+                name,
+                email,
+                username,
+                password_hash,
+                enrollment_id,
+                batch_id,
+                city_id: batch.city_id, // city automatically batch se
+                leetcode_id,
+                gfg_id
+            }
+        });
+        return student;
+    }
+    catch (error) {
+        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2002") {
+                const field = error.meta?.target;
+                if (field?.includes("email"))
+                    throw new Error("Email already exists");
+                if (field?.includes("username"))
+                    throw new Error("Username already exists");
+                if (field?.includes("enrollment_id"))
+                    throw new Error("Enrollment ID already exists");
+                if (field?.includes("google_id"))
+                    throw new Error("Google account already linked");
+                throw new Error("Duplicate field detected");
+            }
+            if (error.code === "P2003") {
+                throw new Error("Invalid batch reference");
+            }
+        }
+        throw new Error("Failed to create student");
+    }
+};
+exports.createStudentService = createStudentService;
+const addStudentProgressService = async (student_id, question_id) => {
+    try {
+        // check student
+        const student = await prisma_1.default.student.findUnique({
+            where: { id: student_id }
+        });
+        if (!student) {
+            throw new Error("Student not found");
+        }
+        // check question
+        const question = await prisma_1.default.question.findUnique({
+            where: { id: question_id }
+        });
+        if (!question) {
+            throw new Error("Question not found");
+        }
+        // create progress
+        const progress = await prisma_1.default.studentProgress.create({
+            data: {
+                student_id,
+                question_id
+            }
+        });
+        return progress;
+    }
+    catch (error) {
+        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+            // duplicate solved question
+            if (error.code === "P2002") {
+                throw new Error("Student already solved this question");
+            }
+            // foreign key error
+            if (error.code === "P2003") {
+                throw new Error("Invalid student or question reference");
+            }
+        }
+        throw new Error("Failed to add student progress");
+    }
+};
+exports.addStudentProgressService = addStudentProgressService;
