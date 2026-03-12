@@ -135,7 +135,8 @@ router.post("/leaderboard/restore", async (req, res) => {
   }
 });
 
-router.get("/questions", getAssignedQuestionsController);
+
+router.get("/assignedquestions", getAssignedQuestionsController);
 
 router.patch("/students/:id", isTeacherOrAbove, isAdmin, updateStudentDetails);
 

@@ -5,18 +5,8 @@ import { syncLeaderboardCache } from '../services/leaderboard.service';
 export const startCronJobs = () => {
     console.log('🕐 Starting cron jobs...');
 
-    // Sync leaderboard cache every 4 hours
-    cron.schedule('0 */4 * * *', async () => {
-        try {
-            console.log('⏰ Running scheduled leaderboard sync...');
-            await syncLeaderboardCache();
-            console.log('✅ Scheduled leaderboard sync completed');
-        } catch (error) {
-            console.error('❌ Scheduled leaderboard sync failed:', error);
-        }
-    });
-
-    // Optional: Sync at midnight daily
+    // Optional: Midnight leaderboard sync for additional daily refresh
+    // This runs in addition to the combined sync in sync.job.ts
     cron.schedule('0 0 * * *', async () => {
         try {
             console.log('🌙 Running midnight leaderboard sync...');
@@ -28,7 +18,8 @@ export const startCronJobs = () => {
     });
 
     console.log('✅ Cron jobs started successfully');
-    console.log('📅 Leaderboard sync scheduled: Every 4 hours + Daily at midnight');
+    console.log('📅 Additional midnight leaderboard sync: Daily at 12:00 AM');
+    console.log('📅 Main combined sync: Every 4 hours (Student Progress → Leaderboard) - handled by sync.job.ts');
 };
 
 // Manual trigger for immediate sync

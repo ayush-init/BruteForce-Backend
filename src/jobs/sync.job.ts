@@ -5,45 +5,34 @@ import { syncLeaderboardCache } from "../services/leaderboard.service";
 export function startSyncJob() {
 
   console.log("Sync cron job started");
-  // */1 * * * *
+  
+  // 🚀 Combined sync job: Student Progress FIRST, then Leaderboard
   cron.schedule("0 */4 * * *", async () => {
-  // cron.schedule("*/1 * * * *", async () => {
-  // cron.schedule("* * * * *", async () => {
-    console.log("Running student progress sync...");
-
+    console.log("🔄 Starting combined sync cycle...");
+    
     try {
+      // Step 1: Update student progress first
+      console.log("📚 Step 1: Syncing student progress...");
+      const studentSyncStart = Date.now();
       await runStudentSyncWorker();
-    } catch (error) {
-      console.error("Student sync job failed:", error);
-    }
-  });
-
-  // 🚀 Leaderboard cache sync every 4 hours
-  cron.schedule("0 */4 * * *", async () => {
-  // cron.schedule("* * * * *", async () => {
-    console.log("⏰ Running scheduled leaderboard sync...");
-
-    try {
+      const studentSyncDuration = Date.now() - studentSyncStart;
+      console.log(`✅ Student progress sync completed in ${studentSyncDuration}ms`);
+      
+      // Step 2: Update leaderboard after student progress is complete
+      console.log("🏆 Step 2: Updating leaderboard cache...");
+      const leaderboardSyncStart = Date.now();
       await syncLeaderboardCache();
-      console.log("✅ Scheduled leaderboard sync completed");
+      const leaderboardSyncDuration = Date.now() - leaderboardSyncStart;
+      console.log(`✅ Leaderboard sync completed in ${leaderboardSyncDuration}ms`);
+      
+      const totalDuration = Date.now() - studentSyncStart;
+      console.log(`🎉 Combined sync cycle completed successfully in ${totalDuration}ms`);
+      
     } catch (error) {
-      console.error("❌ Leaderboard sync job failed:", error);
+      console.error("❌ Combined sync job failed:", error);
     }
   });
 
-  // // Optional: Midnight leaderboard sync for daily refresh
-  // cron.schedule("0 0 * * *", async () => {
-  //   console.log("🌙 Running midnight leaderboard sync...");
-
-  //   try {
-  //     await syncLeaderboardCache();
-  //     console.log("✅ Midnight leaderboard sync completed");
-  //   } catch (error) {
-  //     console.error("❌ Midnight leaderboard sync failed:", error);
-  //   }
-  // });
-
-  // console.log("✅ All cron jobs started successfully");
-  // console.log("📅 Student sync: Every minute");
-  // console.log("📅 Leaderboard sync: Every 4 hours + Daily at midnight");
+  console.log("✅ Sequential cron job started successfully");
+  console.log("📅 Combined sync: Every 4 hours (Student Progress → Leaderboard)");
 }
