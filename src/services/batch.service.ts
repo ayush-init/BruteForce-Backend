@@ -40,21 +40,8 @@ export const createBatchService = async ({
     );
   }
 
-  if (!city.slug) {
-    throw new Error("City slug is missing");
-  }
-
-  const baseSlug = generateBatchSlug(city.slug, batch_name, year);
-
-  let finalSlug = baseSlug;
-  let counter = 1;
-
-  while (
-    await prisma.batch.findFirst({
-      where: { slug: finalSlug },
-    })
-  ) {
-    finalSlug = `${baseSlug}-${counter++}`;
+  if (!city.city_name) {
+    throw new Error("City name is missing");
   }
 
   const batch = await prisma.batch.create({
@@ -62,7 +49,6 @@ export const createBatchService = async ({
       batch_name,
       year,
       city_id,
-      slug: finalSlug,
     },
   });
 
@@ -82,7 +68,7 @@ export const getAllBatchesService = async ({
 
   if (citySlug) {
     const city = await prisma.city.findUnique({
-      where: { slug: citySlug },
+      where: { city_name: citySlug },
     });
 
     if (!city) {
