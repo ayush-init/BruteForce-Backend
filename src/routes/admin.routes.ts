@@ -9,7 +9,8 @@ import { createTopic, deleteTopic, getAllTopics, getTopicsForBatch, updateTopic 
 import { createQuestion, deleteQuestion, getAllQuestions, getAssignedQuestionsController, updateQuestion } from "../controllers/question.controller";
 import { bulkUploadQuestions } from "../controllers/questionBulk.controller";
 import { upload } from "../middlewares/upload.middleware";
-import {  getAdminStats } from "../controllers/admin.controller";
+import { getAdminStats } from "../controllers/admin.controller";
+import { downloadBatchReportController } from "../controllers/csv.controller";
 import { getAdminLeaderboard } from "../controllers/leaderboard.controller";
 import { assignQuestionsToClass, getAssignedQuestionsOfClass, removeQuestionFromClass } from "../controllers/questionVisibility.controller";
 import { createClassInTopic, deleteClass, getClassDetails, getClassesByTopic, updateClass } from "../controllers/class.controller";
@@ -78,6 +79,8 @@ router.post(
 // Admin Statistics
 router.post("/stats", getAdminStats);
 
+// Download Batch Report
+router.post("/student/reportdownload", downloadBatchReportController);
 
 router.post("/leaderboard", verifyToken, isAdmin, getAdminLeaderboard); // Single admin leaderboard with pagination and search
 
