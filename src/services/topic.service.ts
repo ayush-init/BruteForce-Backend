@@ -581,8 +581,9 @@ export const getTopicOverviewWithClassesSummaryService = async ({
       id: cls.id,
       class_name: cls.class_name,
       slug: cls.slug,
-      duration_minutes: cls.duration_minutes,
       description: cls.description,
+      pdf_url: cls.pdf_url,
+      classDate: cls.class_date,
       totalQuestions,
       solvedQuestions
     };
