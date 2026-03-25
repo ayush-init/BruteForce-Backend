@@ -145,6 +145,7 @@ export const getPublicStudentProfileService = async (username: string) => {
             id: true,
             name: true,
             username: true,
+            enrollment_id: true,
             github: true,
             linkedin: true,
             leetcode_id: true,
@@ -194,6 +195,8 @@ export const getPublicStudentProfileService = async (username: string) => {
         take: 5
     });
 
+    const leaderboard = student.leaderboards;
+
     const heatmap = await prisma.$queryRaw`
       SELECT DATE(sync_at) as date, COUNT(*) as count
       FROM "StudentProgress"
@@ -202,13 +205,12 @@ export const getPublicStudentProfileService = async (username: string) => {
       ORDER BY date DESC
     ` as any[];
 
-    const leaderboard = student.leaderboards;
-
     return {
         student: {
             id: student.id,
             name: student.name,
             username: student.username,
+            enrollmentId: student.enrollment_id,
             city: student.city?.city_name || null,
             batch: student.batch?.batch_name || null,
             year: student.batch?.year || null,
@@ -218,7 +220,6 @@ export const getPublicStudentProfileService = async (username: string) => {
             gfg: student.gfg_id,
             profileImageUrl: student.profile_image_url
         },
-
         codingStats: {
             totalSolved: student._count.progress,
             totalAssigned: (batchQuestionCounts?.easy_assigned || 0) + (batchQuestionCounts?.medium_assigned || 0) + (batchQuestionCounts?.hard_assigned || 0),
