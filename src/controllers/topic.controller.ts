@@ -200,6 +200,7 @@ export const getTopicOverviewWithClassesSummary = async (req: Request, res: Resp
       studentId,
       batchId,
       topicSlug: slug,
+      query: req.query,
     });
 
     return res.json(topicOverview);

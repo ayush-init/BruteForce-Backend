@@ -542,12 +542,14 @@ interface GetTopicOverviewWithClassesSummaryInput {
   studentId: number;
   batchId: number;
   topicSlug: string;
+  query?: any;
 }
 
 export const getTopicOverviewWithClassesSummaryService = async ({
   studentId,
   batchId,
   topicSlug,
+  query,
 }: GetTopicOverviewWithClassesSummaryInput) => {
   // Get topic with batch-specific classes
   const topic = await prisma.topic.findFirst({
@@ -627,7 +629,14 @@ export const getTopicOverviewWithClassesSummaryService = async ({
     };
   });
 
-  // Calculate overall topic progress
+  // Apply pagination for classes
+  const page = parseInt(query?.page as string) || 1;
+  const limit = parseInt(query?.limit as string) || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedClasses = classesSummary.slice(startIndex, endIndex);
+
+  // Calculate overall topic progress (based on all classes, not just paginated)
   const totalTopicQuestions = classesSummary.reduce((sum: number, cls: any) => sum + cls.totalQuestions, 0);
   const totalSolvedQuestions = classesSummary.reduce((sum: number, cls: any) => sum + cls.solvedQuestions, 0);
 
@@ -637,7 +646,15 @@ export const getTopicOverviewWithClassesSummaryService = async ({
     slug: (topic as any).slug,
     description: (topic as any).description || null,
     photo_url: (topic as any).photo_url || null,
-    classes: classesSummary,
+    classes: paginatedClasses,
+    pagination: {
+      total: classesSummary.length,
+      totalPages: Math.ceil(classesSummary.length / limit),
+      page,
+      limit,
+      hasNext: page < Math.ceil(classesSummary.length / limit),
+      hasPrev: page > 1
+    },
     overallProgress: {
       totalClasses: classesSummary.length,
       totalQuestions: totalTopicQuestions,

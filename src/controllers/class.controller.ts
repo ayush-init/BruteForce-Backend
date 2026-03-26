@@ -231,6 +231,7 @@ export const getClassDetailsWithFullQuestions = async (req: Request, res: Respon
       batchId,
       topicSlug: topic,
       classSlug: cls,
+      query: req.query,
     });
 
     return res.json(classDetails);

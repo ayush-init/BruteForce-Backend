@@ -448,6 +448,7 @@ interface GetClassDetailsWithFullQuestionsInput {
   batchId: number;
   topicSlug: string;
   classSlug: string;
+  query?: any;
 }
 
 export const getClassDetailsWithFullQuestionsService = async ({
@@ -455,6 +456,7 @@ export const getClassDetailsWithFullQuestionsService = async ({
   batchId,
   topicSlug,
   classSlug,
+  query,
 }: GetClassDetailsWithFullQuestionsInput) => {
   
   // Get class with topic and batch validation
@@ -533,7 +535,33 @@ export const getClassDetailsWithFullQuestionsService = async ({
     };
   });
 
-  // Calculate progress stats
+  // Apply filtering
+  let filteredQuestions = questionsWithProgress;
+  const filter = query?.filter as string;
+  
+  if (filter) {
+    switch (filter) {
+      case 'solved':
+        filteredQuestions = questionsWithProgress.filter(q => q.isSolved);
+        break;
+      case 'unsolved':
+        filteredQuestions = questionsWithProgress.filter(q => !q.isSolved);
+        break;
+      case 'all':
+      default:
+        filteredQuestions = questionsWithProgress;
+        break;
+    }
+  }
+
+  // Apply pagination
+  const page = parseInt(query?.page as string) || 1;
+  const limit = parseInt(query?.limit as string) || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedQuestions = filteredQuestions.slice(startIndex, endIndex);
+
+  // Calculate progress stats (based on all questions, not just filtered)
   const totalQuestions = questionsWithProgress.length;
   const solvedQuestions = questionsWithProgress.filter(q => q.isSolved).length;
 
@@ -549,6 +577,14 @@ export const getClassDetailsWithFullQuestionsService = async ({
     topic: classData.topic,
     totalQuestions,
     solvedQuestions,
-    questions: questionsWithProgress
+    questions: paginatedQuestions,
+    pagination: {
+      total: filteredQuestions.length,
+      totalPages: Math.ceil(filteredQuestions.length / limit),
+      page,
+      limit,
+      hasNext: page < Math.ceil(filteredQuestions.length / limit),
+      hasPrev: page > 1
+    }
   };
 };
