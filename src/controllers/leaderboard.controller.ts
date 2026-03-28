@@ -208,11 +208,11 @@ export const getStudentLeaderboard = asyncHandler(async (req: Request, res: Resp
                         city_name: studentEntry.city_name,
                         max_streak: studentEntry.max_streak,
                         score: studentEntry.score,
-                        easy_solved: 0,
-                        medium_solved: 0,
-                        hard_solved: 0,
+                        easy_solved: studentEntry.easy_solved,
+                        medium_solved: studentEntry.medium_solved,
+                        hard_solved: studentEntry.hard_solved,
                         total_solved: studentEntry.total_solved,
-                        total_assigned: 0
+                        total_assigned: (studentEntry.hard_assigned || 0) + (studentEntry.medium_assigned || 0) + (studentEntry.easy_assigned || 0)
                     };
                 } else {
                     // Check if year mismatch
