@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { ApiError } from "../utils/ApiError";
 
 interface AssignQuestionsInput {
   batchId: number;
@@ -15,7 +16,7 @@ export const assignQuestionsToClassService = async ({
 }: AssignQuestionsInput) => {
 
   if (!questionIds || questionIds.length === 0) {
-    throw new Error("No questions provided");
+    throw new ApiError(400, "No questions provided");
   }
 
   // Find topic first
@@ -24,7 +25,7 @@ export const assignQuestionsToClassService = async ({
   });
 
   if (!topic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   const cls = await prisma.class.findFirst({
@@ -36,7 +37,7 @@ export const assignQuestionsToClassService = async ({
   });
 
   if (!cls) {
-    throw new Error("Class not found in this topic and batch");
+    throw new ApiError(400, "Class not found in this topic and batch");
   }
 
   const data = questionIds.map((qid) => ({
@@ -79,7 +80,7 @@ export const getAssignedQuestionsOfClassService = async ({
   });
 
   if (!topic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   const cls = await prisma.class.findFirst({
@@ -91,7 +92,7 @@ export const getAssignedQuestionsOfClassService = async ({
   });
 
   if (!cls) {
-    throw new Error("Class not found in this topic and batch");
+    throw new ApiError(400, "Class not found in this topic and batch");
   }
 
   // Build where clause
@@ -169,7 +170,7 @@ export const removeQuestionFromClassService = async ({
   });
 
   if (!topic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   const cls = await prisma.class.findFirst({
@@ -181,7 +182,7 @@ export const removeQuestionFromClassService = async ({
   });
 
   if (!cls) {
-    throw new Error("Class not found in this topic and batch");
+    throw new ApiError(400, "Class not found in this topic and batch");
   }
 
   await prisma.questionVisibility.deleteMany({

@@ -1,9 +1,10 @@
 import prisma from "../config/prisma";
+import { ApiError } from "../utils/ApiError";
 
 export const generateBatchReportCSV = async (batchId: number | string) => {
     // Validate and convert batch_id
     if (!batchId || isNaN(parseInt(batchId as string))) {
-        throw new Error("Valid batch_id is required");
+        throw new ApiError(400, "Valid batch_id is required");
     }
 
     const batchIdNum = parseInt(batchId as string);
@@ -21,7 +22,7 @@ export const generateBatchReportCSV = async (batchId: number | string) => {
     });
 
     if (!batch) {
-        throw new Error("Batch not found");
+        throw new ApiError(400, "Batch not found");
     }
 
     // Get all students in this batch with their progress and leaderboard data

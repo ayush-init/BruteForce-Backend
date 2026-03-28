@@ -5,10 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateBatchReportCSV = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
+const ApiError_1 = require("../utils/ApiError");
 const generateBatchReportCSV = async (batchId) => {
     // Validate and convert batch_id
     if (!batchId || isNaN(parseInt(batchId))) {
-        throw new Error("Valid batch_id is required");
+        throw new ApiError_1.ApiError(400, "Valid batch_id is required");
     }
     const batchIdNum = parseInt(batchId);
     // Get batch details with city
@@ -23,7 +24,7 @@ const generateBatchReportCSV = async (batchId) => {
         }
     });
     if (!batch) {
-        throw new Error("Batch not found");
+        throw new ApiError_1.ApiError(400, "Batch not found");
     }
     // Get all students in this batch with their progress and leaderboard data
     const students = await prisma_1.default.student.findMany({

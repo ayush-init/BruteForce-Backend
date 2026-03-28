@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAssignedQuestionsService = exports.deleteQuestionService = exports.updateQuestionService = exports.getAllQuestionsService = exports.createQuestionService = void 0;
 const client_1 = require("@prisma/client");
 const prisma_1 = __importDefault(require("../config/prisma"));
+const ApiError_1 = require("../utils/ApiError");
 const detectPlatform = (link) => {
     const normalized = link.toLowerCase();
     if (normalized.includes("leetcode.com"))
@@ -18,14 +19,14 @@ const detectPlatform = (link) => {
 };
 const createQuestionService = async ({ question_name, question_link, topic_id, platform, level = "MEDIUM", type = "HOMEWORK", }) => {
     if (!question_name || !question_link || !topic_id) {
-        throw new Error("All required fields must be provided");
+        throw new ApiError_1.ApiError(400, "All required fields must be provided");
     }
     // Validate topic
     const topic = await prisma_1.default.topic.findUnique({
         where: { id: topic_id },
     });
     if (!topic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     // Auto detect platform if not provided
     const finalPlatform = platform ?? detectPlatform(question_link);
@@ -36,7 +37,7 @@ const createQuestionService = async ({ question_name, question_link, topic_id, p
         },
     });
     if (duplicate) {
-        throw new Error("Question link already exists");
+        throw new ApiError_1.ApiError(400, "Question link already exists");
     }
     const question = await prisma_1.default.question.create({
         data: {
@@ -60,7 +61,7 @@ const getAllQuestionsService = async ({ topicSlug, level, platform, type, search
             select: { id: true }
         });
         if (!topic) {
-            throw new Error("Topic not found");
+            throw new ApiError_1.ApiError(400, "Topic not found");
         }
         where.topic_id = topic.id;
     }
@@ -119,7 +120,7 @@ const updateQuestionService = async ({ id, question_name, question_link, topic_i
         where: { id },
     });
     if (!existing) {
-        throw new Error("Question not found");
+        throw new ApiError_1.ApiError(400, "Question not found");
     }
     const finalTopicId = topic_id ?? existing.topic_id;
     // Validate topic if changed
@@ -128,7 +129,7 @@ const updateQuestionService = async ({ id, question_name, question_link, topic_i
             where: { id: topic_id },
         });
         if (!topic) {
-            throw new Error("Topic not found");
+            throw new ApiError_1.ApiError(400, "Topic not found");
         }
     }
     const finalLink = question_link ?? existing.question_link;
@@ -140,7 +141,7 @@ const updateQuestionService = async ({ id, question_name, question_link, topic_i
         },
     });
     if (duplicate) {
-        throw new Error("Question link already exists");
+        throw new ApiError_1.ApiError(400, "Question link already exists");
     }
     const updated = await prisma_1.default.question.update({
         where: { id },
@@ -161,19 +162,19 @@ const deleteQuestionService = async ({ id, }) => {
         where: { id },
     });
     if (!existing) {
-        throw new Error("Question not found");
+        throw new ApiError_1.ApiError(400, "Question not found");
     }
     const visibilityCount = await prisma_1.default.questionVisibility.count({
         where: { question_id: id },
     });
     if (visibilityCount > 0) {
-        throw new Error("Cannot delete question assigned to classes");
+        throw new ApiError_1.ApiError(400, "Cannot delete question assigned to classes");
     }
     const progressCount = await prisma_1.default.studentProgress.count({
         where: { question_id: id },
     });
     if (progressCount > 0) {
-        throw new Error("Cannot delete question with student progress");
+        throw new ApiError_1.ApiError(400, "Cannot delete question with student progress");
     }
     await prisma_1.default.question.delete({
         where: { id },
@@ -193,7 +194,7 @@ const getAssignedQuestionsService = async (query) => {
                 where: { city_name: city }
             });
             if (!cityExists) {
-                throw new Error("Invalid city");
+                throw new ApiError_1.ApiError(400, "Invalid city");
             }
             batchFilter.city = {
                 city_name: city
@@ -209,7 +210,7 @@ const getAssignedQuestionsService = async (query) => {
                 }
             });
             if (!batchExists) {
-                throw new Error("Invalid batch");
+                throw new ApiError_1.ApiError(400, "Invalid batch");
             }
             batchFilter.batch_name = batch;
         }
@@ -219,7 +220,7 @@ const getAssignedQuestionsService = async (query) => {
         if (year) {
             const parsedYear = Number(year);
             if (isNaN(parsedYear)) {
-                throw new Error("Year must be a number");
+                throw new ApiError_1.ApiError(400, "Year must be a number");
             }
             batchFilter.year = parsedYear;
         }
@@ -231,7 +232,7 @@ const getAssignedQuestionsService = async (query) => {
             select: { id: true }
         });
         if (batch && batches.length === 0) {
-            throw new Error("Batch not found");
+            throw new ApiError_1.ApiError(400, "Batch not found");
         }
         const batchIds = batches.map(b => b.id);
         // -----------------------------
@@ -295,7 +296,7 @@ const getAssignedQuestionsService = async (query) => {
         };
     }
     catch (error) {
-        throw new Error("Failed to fetch assigned questions");
+        throw new ApiError_1.ApiError(400, "Failed to fetch assigned questions");
     }
 };
 exports.getAssignedQuestionsService = getAssignedQuestionsService;

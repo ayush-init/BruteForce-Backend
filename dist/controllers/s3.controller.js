@@ -2,13 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.testS3Connection = exports.uploadTestFile = void 0;
 const s3_service_1 = require("../services/s3.service");
-const uploadTestFile = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.uploadTestFile = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Check if file was uploaded
         if (!req.file) {
-            return res.status(400).json({
-                error: 'No file uploaded. Please provide a file with field name "file"'
-            });
+            throw new ApiError_1.ApiError(400, 'No file uploaded. Please provide a file with field name "file"');
         }
         // Upload file to S3
         const result = await s3_service_1.S3Service.uploadFile(req.file, 'test-uploads');
@@ -27,13 +27,10 @@ const uploadTestFile = async (req, res) => {
     }
     catch (error) {
         console.error('Upload controller error:', error);
-        res.status(500).json({
-            error: error instanceof Error ? error.message : 'Failed to upload file'
-        });
+        throw new ApiError_1.ApiError(500, error instanceof Error ? error.message : 'Failed to upload file');
     }
-};
-exports.uploadTestFile = uploadTestFile;
-const testS3Connection = async (req, res) => {
+});
+exports.testS3Connection = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Simple test to verify S3 configuration
         res.json({
@@ -49,9 +46,6 @@ const testS3Connection = async (req, res) => {
     }
     catch (error) {
         console.error('S3 test error:', error);
-        res.status(500).json({
-            error: 'S3 configuration test failed'
-        });
+        throw new ApiError_1.ApiError(500, 'S3 configuration test failed');
     }
-};
-exports.testS3Connection = testS3Connection;
+});

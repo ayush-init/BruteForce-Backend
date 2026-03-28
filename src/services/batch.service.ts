@@ -1,5 +1,6 @@
 import prisma from "../config/prisma";
 import { generateBatchSlug } from "../utils/slug";
+import { ApiError } from "../utils/ApiError";
 
 interface CreateBatchInput {
   batch_name: string;
@@ -19,7 +20,7 @@ export const createBatchService = async ({
 }: CreateBatchInput) => {
 
   if (!batch_name || !year || !city_id) {
-    throw new Error("All fields are required");
+    throw new ApiError(400, "All fields are required");
   }
 
   const city = await prisma.city.findUnique({
@@ -27,7 +28,7 @@ export const createBatchService = async ({
   });
 
   if (!city) {
-    throw new Error("City not found");
+    throw new ApiError(400, "City not found");
   }
 
   // Prevent duplicate batch name + year in same city
@@ -40,13 +41,13 @@ export const createBatchService = async ({
   });
 
   if (duplicate) {
-    throw new Error(
-      "Batch with same name and year already exists in this city"
-    );
+    throw new ApiError(400, 
+                "Batch with same name and year already exists in this city"
+              );
   }
 
   if (!city.city_name) {
-    throw new Error("City name is missing");
+    throw new ApiError(400, "City name is missing");
   }
 
   const batch = await prisma.batch.create({
@@ -78,7 +79,7 @@ export const getAllBatchesService = async ({
     });
 
     if (!cityData) {
-      throw new Error("City not found");
+      throw new ApiError(400, "City not found");
     }
 
     filters.city_id = cityData.id;
@@ -124,7 +125,7 @@ export const updateBatchService = async ({
   });
 
   if (!existingBatch) {
-    throw new Error("Batch not found");
+    throw new ApiError(400, "Batch not found");
   }
 
   const finalBatchName = batch_name ?? existingBatch.batch_name;
@@ -136,7 +137,7 @@ export const updateBatchService = async ({
   });
 
   if (!city) {
-    throw new Error("City not found");
+    throw new ApiError(400, "City not found");
   }
 
   // Prevent duplicate inside same city
@@ -150,9 +151,9 @@ export const updateBatchService = async ({
   });
 
   if (duplicate) {
-    throw new Error(
-      "Batch with same name and year already exists in this city"
-    );
+    throw new ApiError(400, 
+                "Batch with same name and year already exists in this city"
+              );
   }
 
   // Detect if relevant fields changed
@@ -193,7 +194,7 @@ export const deleteBatchService = async ({ id }: DeleteBatchInput) => {
   });
 
   if (!batch) {
-    throw new Error("Batch not found");
+    throw new ApiError(400, "Batch not found");
   }
 
   const studentCount = await prisma.student.count({
@@ -201,7 +202,7 @@ export const deleteBatchService = async ({ id }: DeleteBatchInput) => {
   });
 
   if (studentCount > 0) {
-    throw new Error("Cannot delete batch with active students");
+    throw new ApiError(400, "Cannot delete batch with active students");
   }
 
   await prisma.batch.delete({

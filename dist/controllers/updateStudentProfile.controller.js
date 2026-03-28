@@ -5,7 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateStudentProfile = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
-const updateStudentProfile = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.updateStudentProfile = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const studentId = req.user?.id;
         const { leetcode_id, gfg_id, github, linkedin, username } = req.body;
@@ -15,7 +17,7 @@ const updateStudentProfile = async (req, res) => {
             select: { city_id: true, batch_id: true }
         });
         if (!currentStudent) {
-            return res.status(404).json({ error: "Student not found" });
+            throw new ApiError_1.ApiError(404, "Student not found");
         }
         // Build update data - only include fields that are provided
         const updateData = {};
@@ -56,13 +58,12 @@ const updateStudentProfile = async (req, res) => {
         if (error.code === "P2002") {
             const field = error.meta?.target;
             if (field?.includes("username")) {
-                return res.status(400).json({ error: "Username already exists" });
+                throw new ApiError_1.ApiError(400, "Username already exists");
             }
             if (field?.includes("email")) {
-                return res.status(400).json({ error: "Email already exists" });
+                throw new ApiError_1.ApiError(400, "Email already exists");
             }
         }
-        res.status(500).json({ error: "Failed to update profile" });
+        throw new ApiError_1.ApiError(500, "Failed to update profile");
     }
-};
-exports.updateStudentProfile = updateStudentProfile;
+});

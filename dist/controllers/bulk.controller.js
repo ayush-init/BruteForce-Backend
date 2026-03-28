@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bulkStudentUploadController = void 0;
 const bulk_service_1 = require("../services/bulk.service");
-const bulkStudentUploadController = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+exports.bulkStudentUploadController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({
@@ -28,5 +29,4 @@ const bulkStudentUploadController = async (req, res) => {
             error: error.message || "Unknown error"
         });
     }
-};
-exports.bulkStudentUploadController = bulkStudentUploadController;
+});

@@ -2,8 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCity = exports.updateCity = exports.getAllCities = exports.createCity = void 0;
 const city_service_1 = require("../services/city.service");
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
 // Create City
-const createCity = async (req, res) => {
+exports.createCity = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { city_name } = req.body;
         const city = await (0, city_service_1.createCityService)({ city_name });
@@ -13,14 +15,11 @@ const createCity = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.createCity = createCity;
+});
 // Get All Cities
-const getAllCities = async (req, res) => {
+exports.getAllCities = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { search } = req.query;
         let cities = await (0, city_service_1.getAllCitiesService)();
@@ -32,14 +31,11 @@ const getAllCities = async (req, res) => {
         return res.json(cities);
     }
     catch (error) {
-        return res.status(500).json({
-            error: "Failed to fetch cities",
-        });
+        throw new ApiError_1.ApiError(500, "Failed to fetch cities");
     }
-};
-exports.getAllCities = getAllCities;
+});
 // delete city 
-const updateCity = async (req, res) => {
+exports.updateCity = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         const { city_name } = req.body;
@@ -53,13 +49,10 @@ const updateCity = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.updateCity = updateCity;
-const deleteCity = async (req, res) => {
+});
+exports.deleteCity = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         await (0, city_service_1.deleteCityService)({
@@ -70,9 +63,6 @@ const deleteCity = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.deleteCity = deleteCity;
+});

@@ -1,6 +1,7 @@
 // src/services/leetcode.service.ts
 
 import axios from "axios";
+import { ApiError } from "../utils/ApiError";
 
 interface LeetcodeSubmission {
   titleSlug: string;
@@ -50,7 +51,7 @@ export async function fetchLeetcodeData(
   const data = response.data.data;
 
   if (!data.matchedUser) {
-    throw new Error("Invalid LeetCode username");
+    throw new ApiError(400, "Invalid LeetCode username");
   }
 
   const stats = data.matchedUser.submitStatsGlobal.acSubmissionNum;

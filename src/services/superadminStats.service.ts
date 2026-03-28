@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { ApiError } from "../utils/ApiError";
 
 export const getSuperAdminStatsService = async () => {
     try {
@@ -26,7 +27,7 @@ export const getSuperAdminStatsService = async () => {
         };
     } catch (error) {
         console.error("System stats error:", error);
-        throw new Error("Failed to fetch system statistics");
+        throw new ApiError(400, "Failed to fetch system statistics");
         
     }
 };

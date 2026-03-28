@@ -8,7 +8,8 @@ const student_service_1 = require("../services/student.service");
 const student_service_2 = require("../services/student.service");
 const student_service_3 = require("../services/student.service");
 const prisma_1 = __importDefault(require("../config/prisma"));
-const getCurrentStudent = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+exports.getCurrentStudent = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const studentId = req.user?.id;
         if (!studentId) {
@@ -64,9 +65,8 @@ const getCurrentStudent = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to fetch current student"
         });
     }
-};
-exports.getCurrentStudent = getCurrentStudent;
-const updateStudentDetails = async (req, res) => {
+});
+exports.updateStudentDetails = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         const student = await (0, student_service_2.updateStudentDetailsService)(Number(id), req.body);
@@ -84,9 +84,8 @@ const updateStudentDetails = async (req, res) => {
             error: error.message
         });
     }
-};
-exports.updateStudentDetails = updateStudentDetails;
-const deleteStudentDetails = async (req, res) => {
+});
+exports.deleteStudentDetails = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         const studentId = Number(id);
@@ -109,9 +108,8 @@ const deleteStudentDetails = async (req, res) => {
             error: error.message
         });
     }
-};
-exports.deleteStudentDetails = deleteStudentDetails;
-const getAllStudentsController = async (req, res) => {
+});
+exports.getAllStudentsController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const result = await (0, student_service_2.getAllStudentsService)(req.query);
         return res.status(200).json(result);
@@ -122,9 +120,8 @@ const getAllStudentsController = async (req, res) => {
             error: error.message
         });
     }
-};
-exports.getAllStudentsController = getAllStudentsController;
-const getStudentReportController = async (req, res) => {
+});
+exports.getStudentReportController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { username } = req.params;
         const usernameStr = Array.isArray(username) ? username[0] : username;
@@ -137,9 +134,8 @@ const getStudentReportController = async (req, res) => {
             error: error.message
         });
     }
-};
-exports.getStudentReportController = getStudentReportController;
-const createStudentController = async (req, res) => {
+});
+exports.createStudentController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const student = await (0, student_service_3.createStudentService)(req.body);
         return res.status(201).json({
@@ -152,9 +148,8 @@ const createStudentController = async (req, res) => {
             message: error.message
         });
     }
-};
-exports.createStudentController = createStudentController;
-const addStudentProgressController = async (req, res) => {
+});
+exports.addStudentProgressController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { student_id, question_id } = req.body;
         if (!student_id || !question_id) {
@@ -173,5 +168,4 @@ const addStudentProgressController = async (req, res) => {
             message: error.message
         });
     }
-};
-exports.addStudentProgressController = addStudentProgressController;
+});

@@ -2,52 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAllQuestionsWithFilters = exports.removeQuestionFromClass = exports.getAssignedQuestionsOfClass = exports.assignQuestionsToClass = void 0;
 const questionVisibility_service_1 = require("../services/questionVisibility.service");
-const assignQuestionsToClass = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.assignQuestionsToClass = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         const classSlug = req.params.classSlug;
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
         if (typeof classSlug !== "string") {
-            return res.status(400).json({
-                error: "Invalid class slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid class slug");
         }
         const { question_ids } = req.body;
         // Validation 1: Check if question_ids is provided
         if (!question_ids) {
-            return res.status(400).json({
-                error: "question_ids field is required",
-            });
+            throw new ApiError_1.ApiError(400, "question_ids field is required");
         }
         // Validation 2: Check if question_ids is an array
         if (!Array.isArray(question_ids)) {
-            return res.status(400).json({
-                error: "question_ids must be an array",
-            });
+            throw new ApiError_1.ApiError(400, "question_ids must be an array");
         }
         // Validation 3: Check if array is not empty
         if (question_ids.length === 0) {
-            return res.status(400).json({
-                error: "question_ids array cannot be empty",
-            });
+            throw new ApiError_1.ApiError(400, "question_ids array cannot be empty");
         }
         // Validation 4: Check if all elements are numbers
         if (!question_ids.every(id => typeof id === 'number' && id > 0)) {
-            return res.status(400).json({
-                error: "All question_ids must be positive numbers",
-            });
+            throw new ApiError_1.ApiError(400, "All question_ids must be positive numbers");
         }
         // Validation 5: Check for duplicate question IDs in request
         const duplicateIds = question_ids.filter((id, index) => question_ids.indexOf(id) !== index);
         if (duplicateIds.length > 0) {
-            return res.status(400).json({
-                error: `Duplicate question IDs found in request: ${duplicateIds.join(', ')}`,
-            });
+            throw new ApiError_1.ApiError(400, `Duplicate question IDs found in request: ${duplicateIds.join(', ')}`);
         }
         const result = await (0, questionVisibility_service_1.assignQuestionsToClassService)({
             batchId: batch.id,
@@ -61,70 +49,61 @@ const assignQuestionsToClass = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.assignQuestionsToClass = assignQuestionsToClass;
-const getAssignedQuestionsOfClass = async (req, res) => {
+});
+exports.getAssignedQuestionsOfClass = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         const classSlug = req.params.classSlug;
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
         if (typeof classSlug !== "string") {
-            return res.status(400).json({
-                error: "Invalid class slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid class slug");
         }
+        // Extract pagination and search parameters
+        const { page = '1', limit = '25', search = '' } = req.query;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const searchQuery = search;
         const assigned = await (0, questionVisibility_service_1.getAssignedQuestionsOfClassService)({
             batchId: batch.id,
             topicSlug: topicSlugParam,
             classSlug,
+            page: pageNum,
+            limit: limitNum,
+            search: searchQuery,
         });
         return res.json({
             message: "Assigned questions retrieved successfully",
-            data: assigned,
+            data: assigned.data,
+            pagination: assigned.pagination,
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.getAssignedQuestionsOfClass = getAssignedQuestionsOfClass;
-const removeQuestionFromClass = async (req, res) => {
+});
+exports.removeQuestionFromClass = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         const classSlug = req.params.classSlug;
         const questionIdParam = req.params.questionId;
         if (typeof questionIdParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid question ID",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid question ID");
         }
         const questionId = parseInt(questionIdParam);
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
         if (typeof classSlug !== "string") {
-            return res.status(400).json({
-                error: "Invalid class slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid class slug");
         }
         if (isNaN(questionId)) {
-            return res.status(400).json({
-                error: "Invalid question ID",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid question ID");
         }
         await (0, questionVisibility_service_1.removeQuestionFromClassService)({
             batchId: batch.id,
@@ -137,23 +116,18 @@ const removeQuestionFromClass = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.removeQuestionFromClass = removeQuestionFromClass;
+});
 // Student-specific controller - get all questions with filters for student's batch
-const getAllQuestionsWithFilters = async (req, res) => {
+exports.getAllQuestionsWithFilters = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get student info from middleware (extractStudentInfo)
         const student = req.student;
         const batchId = req.batchId;
         const studentId = student?.id;
         if (!studentId || !batchId) {
-            return res.status(400).json({
-                error: "Student authentication required",
-            });
+            throw new ApiError_1.ApiError(400, "Student authentication required");
         }
         // Extract query parameters for filtering
         const { search, topic, level, platform, type, solved, page = '1', limit = '20' } = req.query;
@@ -175,9 +149,6 @@ const getAllQuestionsWithFilters = async (req, res) => {
         return res.json(questions);
     }
     catch (error) {
-        return res.status(500).json({
-            error: error.message || "Failed to fetch questions",
-        });
+        throw new ApiError_1.ApiError(500, error.message || "Failed to fetch questions");
     }
-};
-exports.getAllQuestionsWithFilters = getAllQuestionsWithFilters;
+});

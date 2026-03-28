@@ -5,16 +5,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAllQuestionsWithFiltersService = exports.removeQuestionFromClassService = exports.getAssignedQuestionsOfClassService = exports.assignQuestionsToClassService = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
+const ApiError_1 = require("../utils/ApiError");
 const assignQuestionsToClassService = async ({ batchId, topicSlug, classSlug, questionIds, }) => {
     if (!questionIds || questionIds.length === 0) {
-        throw new Error("No questions provided");
+        throw new ApiError_1.ApiError(400, "No questions provided");
     }
     // Find topic first
     const topic = await prisma_1.default.topic.findUnique({
         where: { slug: topicSlug },
     });
     if (!topic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     const cls = await prisma_1.default.class.findFirst({
         where: {
@@ -24,7 +25,7 @@ const assignQuestionsToClassService = async ({ batchId, topicSlug, classSlug, qu
         },
     });
     if (!cls) {
-        throw new Error("Class not found in this topic and batch");
+        throw new ApiError_1.ApiError(400, "Class not found in this topic and batch");
     }
     const data = questionIds.map((qid) => ({
         class_id: cls.id,
@@ -34,18 +35,18 @@ const assignQuestionsToClassService = async ({ batchId, topicSlug, classSlug, qu
         data,
         skipDuplicates: true,
     });
-    // 🔄 Update batch question counts after assignment
+    // Update batch question counts after assignment
     await updateBatchQuestionCounts(batchId);
     return { assignedCount: questionIds.length };
 };
 exports.assignQuestionsToClassService = assignQuestionsToClassService;
-const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlug, }) => {
+const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlug, page = 1, limit = 25, search = '', }) => {
     // Find topic first
     const topic = await prisma_1.default.topic.findUnique({
         where: { slug: topicSlug },
     });
     if (!topic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     const cls = await prisma_1.default.class.findFirst({
         where: {
@@ -55,12 +56,30 @@ const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlu
         },
     });
     if (!cls) {
-        throw new Error("Class not found in this topic and batch");
+        throw new ApiError_1.ApiError(400, "Class not found in this topic and batch");
     }
+    // Build where clause
+    const whereClause = {
+        class_id: cls.id,
+    };
+    // Add search filter if provided
+    if (search) {
+        whereClause.question = {
+            question_name: {
+                contains: search,
+                mode: 'insensitive'
+            }
+        };
+    }
+    // Get total count for pagination
+    const total = await prisma_1.default.questionVisibility.count({
+        where: whereClause,
+    });
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(total / limit);
     const assigned = await prisma_1.default.questionVisibility.findMany({
-        where: {
-            class_id: cls.id,
-        },
+        where: whereClause,
         include: {
             question: {
                 include: {
@@ -73,8 +92,19 @@ const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlu
         orderBy: {
             assigned_at: "desc",
         },
+        skip,
+        take: limit,
     });
-    return assigned.map((qv) => qv.question);
+    const questions = assigned.map((qv) => qv.question);
+    return {
+        data: questions,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+        },
+    };
 };
 exports.getAssignedQuestionsOfClassService = getAssignedQuestionsOfClassService;
 const removeQuestionFromClassService = async ({ batchId, topicSlug, classSlug, questionId, }) => {
@@ -83,7 +113,7 @@ const removeQuestionFromClassService = async ({ batchId, topicSlug, classSlug, q
         where: { slug: topicSlug },
     });
     if (!topic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     const cls = await prisma_1.default.class.findFirst({
         where: {
@@ -93,7 +123,7 @@ const removeQuestionFromClassService = async ({ batchId, topicSlug, classSlug, q
         },
     });
     if (!cls) {
-        throw new Error("Class not found in this topic and batch");
+        throw new ApiError_1.ApiError(400, "Class not found in this topic and batch");
     }
     await prisma_1.default.questionVisibility.deleteMany({
         where: {

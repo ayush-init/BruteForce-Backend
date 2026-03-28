@@ -2,7 +2,7 @@ import prisma from "../config/prisma";
 import bcrypt from "bcryptjs";
 import { generateUsername } from "../utils/usernameGenerator";
 import { Prisma } from "@prisma/client";
-
+import { ApiError } from "../utils/ApiError";
 
 // ==============================
 // GET ALL STUDENTS
@@ -163,7 +163,7 @@ export const getAllStudentsService = async (query: any) => {
         };
 
     } catch (error) {
-        throw new Error("Failed to fetch students");
+        throw new ApiError(400, "Failed to fetch students");
     }
 };
 
@@ -207,7 +207,7 @@ export const getStudentReportService = async (username: string) => {
         });
 
         if (!student) {
-            throw new Error("Student not found");
+            throw new ApiError(400, "Student not found");
         }
 
         const [solvedQuestions, batchQuestions, topics] = await Promise.all([
@@ -369,7 +369,7 @@ export const getStudentReportService = async (username: string) => {
         };
 
     } catch (error) {
-        throw new Error("Failed to fetch student report");
+        throw new ApiError(400, "Failed to fetch student report");
     }
 };
 
@@ -384,7 +384,7 @@ export const updateStudentDetailsService = async (id: number, body: any) => {
         });
 
         if (!student) {
-            throw new Error("Student not found");
+            throw new ApiError(400, "Student not found");
         }
 
         const updateData: any = { ...body };
@@ -401,16 +401,16 @@ export const updateStudentDetailsService = async (id: number, body: any) => {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
 
             if (error.code === "P2002") {
-                throw new Error("Email, Username or Enrollment ID already exists");
+                throw new ApiError(400, "Email, Username or Enrollment ID already exists");
             }
 
             if (error.code === "P2003") {
-                throw new Error("Invalid city or batch reference");
+                throw new ApiError(400, "Invalid city or batch reference");
             }
 
         }
 
-        throw new Error("Failed to update student");
+        throw new ApiError(400, "Failed to update student");
     }
 };
 
@@ -428,7 +428,7 @@ export const deleteStudentDetailsService = async (id: number) => {
         });
 
         if (!student) {
-            throw new Error("Student not found");
+            throw new ApiError(400, "Student not found");
         }
 
         await prisma.student.delete({
@@ -438,7 +438,7 @@ export const deleteStudentDetailsService = async (id: number) => {
         return true;
 
     } catch (error) {
-        throw new Error("Failed to delete student");
+        throw new ApiError(400, "Failed to delete student");
     }
 };
 
@@ -464,7 +464,7 @@ export const createStudentService = async (data: any) => {
 
         // Only require name and email, username will be generated if not provided
         if (!name || !email) {
-            throw new Error("Name and email are required");
+            throw new ApiError(400, "Name and email are required");
         }
 
         // Generate username if not provided
@@ -483,7 +483,7 @@ export const createStudentService = async (data: any) => {
         });
 
         if (!batch) {
-            throw new Error("Batch not found");
+            throw new ApiError(400, "Batch not found");
         }
 
         let password_hash = null;
@@ -517,26 +517,26 @@ export const createStudentService = async (data: any) => {
                 const field = error.meta?.target as string[] | undefined;
 
                 if (field?.includes("email"))
-                    throw new Error("Email already exists");
+                    throw new ApiError(400, "Email already exists");
 
                 if (field?.includes("username"))
-                    throw new Error("Username already exists");
+                    throw new ApiError(400, "Username already exists");
 
                 if (field?.includes("enrollment_id"))
-                    throw new Error("Enrollment ID already exists");
+                    throw new ApiError(400, "Enrollment ID already exists");
 
                 if (field?.includes("google_id"))
-                    throw new Error("Google account already linked");
+                    throw new ApiError(400, "Google account already linked");
 
-                throw new Error("Duplicate field detected");
+                throw new ApiError(400, "Duplicate field detected");
             }
 
             if (error.code === "P2003") {
-                throw new Error("Invalid batch reference");
+                throw new ApiError(400, "Invalid batch reference");
             }
         }
 
-        throw new Error("Failed to create student");
+        throw new ApiError(400, "Failed to create student");
     }
 };
 
@@ -552,7 +552,7 @@ export const addStudentProgressService = async (
         });
 
         if (!student) {
-            throw new Error("Student not found");
+            throw new ApiError(400, "Student not found");
         }
 
         // check question
@@ -561,7 +561,7 @@ export const addStudentProgressService = async (
         });
 
         if (!question) {
-            throw new Error("Question not found");
+            throw new ApiError(400, "Question not found");
         }
 
         // create progress
@@ -580,16 +580,16 @@ export const addStudentProgressService = async (
 
             // duplicate solved question
             if (error.code === "P2002") {
-                throw new Error("Student already solved this question");
+                throw new ApiError(400, "Student already solved this question");
             }
 
             // foreign key error
             if (error.code === "P2003") {
-                throw new Error("Invalid student or question reference");
+                throw new ApiError(400, "Invalid student or question reference");
             }
 
         }
 
-        throw new Error("Failed to add student progress");
+        throw new ApiError(400, "Failed to add student progress");
     }
 };

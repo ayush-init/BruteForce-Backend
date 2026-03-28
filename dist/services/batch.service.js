@@ -6,15 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteBatchService = exports.updateBatchService = exports.getAllBatchesService = exports.createBatchService = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
 const slug_1 = require("../utils/slug");
+const ApiError_1 = require("../utils/ApiError");
 const createBatchService = async ({ batch_name, year, city_id, }) => {
     if (!batch_name || !year || !city_id) {
-        throw new Error("All fields are required");
+        throw new ApiError_1.ApiError(400, "All fields are required");
     }
     const city = await prisma_1.default.city.findUnique({
         where: { id: city_id },
     });
     if (!city) {
-        throw new Error("City not found");
+        throw new ApiError_1.ApiError(400, "City not found");
     }
     // Prevent duplicate batch name + year in same city
     const duplicate = await prisma_1.default.batch.findFirst({
@@ -25,10 +26,10 @@ const createBatchService = async ({ batch_name, year, city_id, }) => {
         },
     });
     if (duplicate) {
-        throw new Error("Batch with same name and year already exists in this city");
+        throw new ApiError_1.ApiError(400, "Batch with same name and year already exists in this city");
     }
     if (!city.city_name) {
-        throw new Error("City name is missing");
+        throw new ApiError_1.ApiError(400, "City name is missing");
     }
     const batch = await prisma_1.default.batch.create({
         data: {
@@ -48,7 +49,7 @@ const getAllBatchesService = async ({ city, year, }) => {
             where: { city_name: city },
         });
         if (!cityData) {
-            throw new Error("City not found");
+            throw new ApiError_1.ApiError(400, "City not found");
         }
         filters.city_id = cityData.id;
     }
@@ -76,7 +77,7 @@ const updateBatchService = async ({ id, batch_name, year, city_id, }) => {
         where: { id },
     });
     if (!existingBatch) {
-        throw new Error("Batch not found");
+        throw new ApiError_1.ApiError(400, "Batch not found");
     }
     const finalBatchName = batch_name ?? existingBatch.batch_name;
     const finalYear = year ?? existingBatch.year;
@@ -85,7 +86,7 @@ const updateBatchService = async ({ id, batch_name, year, city_id, }) => {
         where: { id: finalCityId },
     });
     if (!city) {
-        throw new Error("City not found");
+        throw new ApiError_1.ApiError(400, "City not found");
     }
     // Prevent duplicate inside same city
     const duplicate = await prisma_1.default.batch.findFirst({
@@ -97,15 +98,26 @@ const updateBatchService = async ({ id, batch_name, year, city_id, }) => {
         },
     });
     if (duplicate) {
-        throw new Error("Batch with same name and year already exists in this city");
+        throw new ApiError_1.ApiError(400, "Batch with same name and year already exists in this city");
+    }
+    // Detect if relevant fields changed
+    const batchNameChanged = batch_name && batch_name !== existingBatch.batch_name;
+    const yearChanged = year && year !== existingBatch.year;
+    const cityIdChanged = city_id && city_id !== existingBatch.city_id;
+    const shouldRegenerateSlug = batchNameChanged || yearChanged || cityIdChanged;
+    // Prepare update data
+    const updateData = {
+        batch_name: finalBatchName,
+        year: finalYear,
+        city_id: finalCityId,
+    };
+    // Regenerate slug only if relevant fields changed
+    if (shouldRegenerateSlug) {
+        updateData.slug = (0, slug_1.generateBatchSlug)(city.city_name, finalBatchName, finalYear);
     }
     const updatedBatch = await prisma_1.default.batch.update({
         where: { id: existingBatch.id },
-        data: {
-            batch_name: finalBatchName,
-            year: finalYear,
-            city_id: finalCityId,
-        },
+        data: updateData,
     });
     return updatedBatch;
 };
@@ -115,13 +127,13 @@ const deleteBatchService = async ({ id }) => {
         where: { id },
     });
     if (!batch) {
-        throw new Error("Batch not found");
+        throw new ApiError_1.ApiError(400, "Batch not found");
     }
     const studentCount = await prisma_1.default.student.count({
         where: { batch_id: batch.id },
     });
     if (studentCount > 0) {
-        throw new Error("Cannot delete batch with active students");
+        throw new ApiError_1.ApiError(400, "Cannot delete batch with active students");
     }
     await prisma_1.default.batch.delete({
         where: { id: batch.id },

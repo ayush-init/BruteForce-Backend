@@ -1,38 +1,35 @@
 import { Request, Response } from "express";
 import { bulkUploadQuestionsService } from "../services/questionBulk.service";
+import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError";
 
-export const bulkUploadQuestions = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        error: "CSV file is required",
-      });
-    }
+export const bulkUploadQuestions = asyncHandler(async (
+          req: Request,
+          res: Response
+        ) => {
+          try {
+            if (!req.file) {
+              throw new ApiError(400, "CSV file is required",);
+            }
 
-    const { topicId } = req.body;
+            const { topicId } = req.body;
 
-    if (!topicId) {
-      return res.status(400).json({
-        error: "Topic ID is required",
-      });
-    }
+            if (!topicId) {
+              throw new ApiError(400, "Topic ID is required",);
+            }
 
-    const result = await bulkUploadQuestionsService(
-      req.file.buffer,
-      Number(topicId)
-    );
+            const result = await bulkUploadQuestionsService(
+              req.file.buffer,
+              Number(topicId)
+            );
 
-    return res.json({
-      message: "Bulk upload successful",
-      ...result,
-    });
+            return res.json({
+              message: "Bulk upload successful",
+              ...result,
+            });
 
-  } catch (error: any) {
-    return res.status(400).json({
-      error: error.message,
-    });
-  }
-};
+          } catch (error: any) {
+    if (error instanceof ApiError) throw error;
+            throw new ApiError(400, error.message,);
+          }
+        });

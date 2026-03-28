@@ -6,8 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLeaderboardByType = exports.getLeaderboardPost = exports.getStudentLeaderboard = exports.getAdminLeaderboard = exports.getAvailableYearsController = void 0;
 const leaderboard_service_1 = require("../services/leaderboard.service");
 const prisma_1 = __importDefault(require("../config/prisma"));
+const asyncHandler_1 = require("../utils/asyncHandler");
 // Get available years for leaderboard filters
-const getAvailableYearsController = async (req, res) => {
+exports.getAvailableYearsController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const years = await (0, leaderboard_service_1.getAvailableYears)();
         return res.status(200).json({
@@ -22,10 +23,9 @@ const getAvailableYearsController = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to fetch available years"
         });
     }
-};
-exports.getAvailableYearsController = getAvailableYearsController;
+});
 // Admin Leaderboard API with pagination and search
-const getAdminLeaderboard = async (req, res) => {
+exports.getAdminLeaderboard = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Step 1 — Read filters from request body
         const body = req.body || {};
@@ -76,17 +76,19 @@ const getAdminLeaderboard = async (req, res) => {
                 total_solved: Number(entry.total_solved || 0),
                 score: Number(entry.score || 0),
                 global_rank: globalRank,
-                city_rank: cityRank,
-                last_calculated: entry.last_calculated
+                city_rank: cityRank
             };
         });
         return res.status(200).json({
             success: true,
-            page: result.pagination.page,
-            limit: result.pagination.limit,
-            total: result.pagination.total,
-            totalPages: result.pagination.totalPages,
-            leaderboard: formattedLeaderboard
+            data: {
+                leaderboard: formattedLeaderboard,
+                total: result.pagination.total,
+                page: result.pagination.page,
+                limit: result.pagination.limit,
+                available_cities: result.available_cities,
+                last_calculated: result.last_calculated
+            }
         });
     }
     catch (error) {
@@ -96,10 +98,9 @@ const getAdminLeaderboard = async (req, res) => {
             message: error instanceof Error ? error.message : "An error occurred"
         });
     }
-};
-exports.getAdminLeaderboard = getAdminLeaderboard;
+});
 // Student Leaderboard API with top 10 and personal rank
-const getStudentLeaderboard = async (req, res) => {
+exports.getStudentLeaderboard = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Step 1 — Get student ID from auth middleware
         const studentId = req.studentId;
@@ -172,8 +173,7 @@ const getStudentLeaderboard = async (req, res) => {
                 total_solved: Number(entry.total_solved || 0),
                 score: Number(entry.score || 0),
                 global_rank: globalRank,
-                city_rank: cityRank,
-                last_calculated: entry.last_calculated
+                city_rank: cityRank
             };
         });
         // Step 9 — Get logged-in student's rank using direct query
@@ -203,7 +203,8 @@ const getStudentLeaderboard = async (req, res) => {
                 easy_solved: easyCompletion,
                 medium_solved: mediumCompletion,
                 hard_solved: hardCompletion,
-                total_solved: totalCompletion
+                total_solved: studentEntry.total_solved, // Actual solved count
+                total_assigned: studentEntry.hard_assigned + studentEntry.medium_assigned + studentEntry.easy_assigned // Total assigned
             };
         }
         else {
@@ -217,13 +218,17 @@ const getStudentLeaderboard = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            top10: formattedTop10,
-            yourRank,
-            message: rankMessage,
-            filters: {
-                city: filters.city,
-                year: filters.year,
-                type: filters.type
+            data: {
+                top10: formattedTop10,
+                yourRank,
+                message: rankMessage,
+                filters: {
+                    city: filters.city,
+                    year: filters.year,
+                    type: filters.type
+                },
+                available_cities: top10Result.available_cities,
+                last_calculated: top10Result.last_calculated
             }
         });
     }
@@ -234,10 +239,9 @@ const getStudentLeaderboard = async (req, res) => {
             message: error instanceof Error ? error.message : "An error occurred"
         });
     }
-};
-exports.getStudentLeaderboard = getStudentLeaderboard;
+});
 // Legacy endpoints for backward compatibility
-const getLeaderboardPost = async (req, res) => {
+exports.getLeaderboardPost = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const body = req.body || {};
         const { city, year, type } = body;
@@ -261,9 +265,8 @@ const getLeaderboardPost = async (req, res) => {
             message: error instanceof Error ? error.message : "An error occurred"
         });
     }
-};
-exports.getLeaderboardPost = getLeaderboardPost;
-const getLeaderboardByType = async (req, res) => {
+});
+exports.getLeaderboardByType = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const studentId = req.studentId;
         if (!studentId) {
@@ -385,5 +388,4 @@ const getLeaderboardByType = async (req, res) => {
             message: error instanceof Error ? error.message : "An error occurred"
         });
     }
-};
-exports.getLeaderboardByType = getLeaderboardByType;
+});

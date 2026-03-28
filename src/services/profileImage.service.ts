@@ -1,5 +1,6 @@
 import { S3Service } from '../services/s3.service';
 import prisma from '../config/prisma';
+import { ApiError } from "../utils/ApiError";
 
 // Helper function to extract S3 key from URL
 function getS3KeyFromUrl(url: string): string {
@@ -24,7 +25,7 @@ export class ProfileImageService {
       });
 
       if (!student) {
-        throw new Error('Student not found');
+        throw new ApiError(400, 'Student not found');
       }
 
       // Delete old profile image if exists
@@ -61,7 +62,7 @@ export class ProfileImageService {
       });
 
       if (!student) {
-        throw new Error('Student not found');
+        throw new ApiError(400, 'Student not found');
       }
 
       // Delete from S3 if image exists

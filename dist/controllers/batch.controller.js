@@ -2,8 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteBatch = exports.updateBatch = exports.getAllBatches = exports.createBatch = void 0;
 const batch_service_1 = require("../services/batch.service");
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
 //  CREATE BATCH
-const createBatch = async (req, res) => {
+exports.createBatch = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { batch_name, year, city_id } = req.body;
         const batch = await (0, batch_service_1.createBatchService)({
@@ -17,14 +19,11 @@ const createBatch = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.createBatch = createBatch;
+});
 // 📋 GET ALL BATCHES 
-const getAllBatches = async (req, res) => {
+exports.getAllBatches = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { city, year } = req.query;
         const batches = await (0, batch_service_1.getAllBatchesService)({
@@ -34,14 +33,11 @@ const getAllBatches = async (req, res) => {
         return res.json(batches);
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.getAllBatches = getAllBatches;
+});
 //  UPDATE BATCH
-const updateBatch = async (req, res) => {
+exports.updateBatch = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         const { batch_name, year, city_id } = req.body;
@@ -57,14 +53,11 @@ const updateBatch = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.updateBatch = updateBatch;
+});
 //  DELETE BATCH
-const deleteBatch = async (req, res) => {
+exports.deleteBatch = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const id = Number(req.params.id);
         await (0, batch_service_1.deleteBatchService)({ id });
@@ -73,9 +66,6 @@ const deleteBatch = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.deleteBatch = deleteBatch;
+});

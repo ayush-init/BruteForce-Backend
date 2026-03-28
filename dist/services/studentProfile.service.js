@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPublicStudentProfileService = exports.getStudentProfileService = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
+const ApiError_1 = require("../utils/ApiError");
 const getStudentProfileService = async (studentId) => {
     try {
         // 1️⃣ Get student basic info + leaderboard
@@ -33,7 +34,7 @@ const getStudentProfileService = async (studentId) => {
             }
         });
         if (!student) {
-            throw new Error("Student not found");
+            throw new ApiError_1.ApiError(400, "Student not found");
         }
         // Get batch question counts for all levels
         const batchQuestionCounts = await prisma_1.default.batch.findUnique({
@@ -149,7 +150,7 @@ const getStudentProfileService = async (studentId) => {
         };
     }
     catch (error) {
-        throw new Error("Student profile retrieval failed: " +
+        throw new ApiError_1.ApiError(400, "Student profile retrieval failed: " +
             (error instanceof Error ? error.message : String(error)));
     }
 };
@@ -179,7 +180,7 @@ const getPublicStudentProfileService = async (username) => {
         }
     });
     if (!student) {
-        throw new Error("Student not found");
+        throw new ApiError_1.ApiError(400, "Student not found");
     }
     const studentId = student.id;
     // Get batch question counts for all levels

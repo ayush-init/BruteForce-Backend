@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadBatchReportController = void 0;
 const csv_service_1 = require("../services/csv.service");
-const downloadBatchReportController = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+exports.downloadBatchReportController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { batch_id } = req.body;
         console.log('Controller: Received request for batch_id:', batch_id);
@@ -44,5 +45,4 @@ const downloadBatchReportController = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to generate batch report"
         });
     }
-};
-exports.downloadBatchReportController = downloadBatchReportController;
+});

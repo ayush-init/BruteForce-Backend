@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAssignedQuestionsController = exports.deleteQuestion = exports.updateQuestion = exports.getAllQuestions = exports.createQuestion = void 0;
 const question_service_1 = require("../services/question.service");
-const createQuestion = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.createQuestion = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const question = await (0, question_service_1.createQuestionService)(req.body);
         return res.status(201).json({
@@ -11,13 +13,10 @@ const createQuestion = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.createQuestion = createQuestion;
-const getAllQuestions = async (req, res) => {
+});
+exports.getAllQuestions = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { topicSlug, level, platform, type, search, page, limit, } = req.query;
         const result = await (0, question_service_1.getAllQuestionsService)({
@@ -32,13 +31,10 @@ const getAllQuestions = async (req, res) => {
         return res.json(result);
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.getAllQuestions = getAllQuestions;
-const updateQuestion = async (req, res) => {
+});
+exports.updateQuestion = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         const updated = await (0, question_service_1.updateQuestionService)({
@@ -51,13 +47,10 @@ const updateQuestion = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.updateQuestion = updateQuestion;
-const deleteQuestion = async (req, res) => {
+});
+exports.deleteQuestion = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         await (0, question_service_1.deleteQuestionService)({
@@ -68,13 +61,10 @@ const deleteQuestion = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.deleteQuestion = deleteQuestion;
-const getAssignedQuestionsController = async (req, res) => {
+});
+exports.getAssignedQuestionsController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const data = await (0, question_service_1.getAssignedQuestionsService)(req.query);
         return res.status(200).json({
@@ -88,5 +78,4 @@ const getAssignedQuestionsController = async (req, res) => {
             error: error.message || "Failed to fetch questions"
         });
     }
-};
-exports.getAssignedQuestionsController = getAssignedQuestionsController;
+});

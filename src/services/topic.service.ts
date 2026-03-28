@@ -1,6 +1,7 @@
 import prisma from "../config/prisma";
 import { slugify } from "transliteration";
 import { S3Service } from "../services/s3.service";
+import { ApiError } from "../utils/ApiError";
 
 export const createTopicService = async ({ topic_name, photo }: { topic_name: string; photo?: Express.Multer.File }) => {
   let photoKey: string | null = null;
@@ -13,7 +14,7 @@ export const createTopicService = async ({ topic_name, photo }: { topic_name: st
       photoUrl = uploadResult.url;
       photoKey = uploadResult.key;
     } catch (error) {
-      throw new Error("Failed to upload photo to S3");
+      throw new ApiError(400, "Failed to upload photo to S3");
     }
   }
 
@@ -53,10 +54,10 @@ export const createTopicService = async ({ topic_name, photo }: { topic_name: st
     }
 
     if (error.code === "P2002") {
-      throw new Error("Topic already exists");
+      throw new ApiError(400, "Topic already exists");
     }
 
-    throw new Error("Failed to create topic");
+    throw new ApiError(400, "Failed to create topic");
   }
 };
 
@@ -97,7 +98,7 @@ export const getTopicsForBatchService = async ({ batchId, query }: GetTopicsForB
   });
 
   if (!batch) {
-    throw new Error("Batch not found");
+    throw new ApiError(400, "Batch not found");
   }
 
   // Get ALL topics for this batch (not just ones with classes)
@@ -265,7 +266,7 @@ export const updateTopicService = async ({ topicSlug, topic_name, photo, removeP
   });
 
   if (!existingTopic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   let newPhotoUrl: string | null = existingTopic.photo_url;
@@ -294,7 +295,7 @@ export const updateTopicService = async ({ topicSlug, topic_name, photo, removeP
         oldPhotoKey = `topics/${urlParts[urlParts.length - 1]}`;
       }
     } catch (error) {
-      throw new Error("Failed to upload photo to S3");
+      throw new ApiError(400, "Failed to upload photo to S3");
     }
   }
 
@@ -306,7 +307,7 @@ export const updateTopicService = async ({ topicSlug, topic_name, photo, removeP
     });
 
     if (duplicate && duplicate.id !== existingTopic.id) {
-      throw new Error("Topic already exists");
+      throw new ApiError(400, "Topic already exists");
     }
 
     const baseSlug = slugify(topic_name).toLowerCase();
@@ -359,7 +360,7 @@ export const updateTopicService = async ({ topicSlug, topic_name, photo, removeP
       }
     }
 
-    throw new Error("Failed to update topic");
+    throw new ApiError(400, "Failed to update topic");
   }
 };
 
@@ -373,7 +374,7 @@ export const deleteTopicService = async ({ topicSlug }: DeleteTopicInput) => {
   });
 
   if (!topic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   const classCount = await prisma.class.count({
@@ -381,7 +382,7 @@ export const deleteTopicService = async ({ topicSlug }: DeleteTopicInput) => {
   });
 
   if (classCount > 0) {
-    throw new Error("Cannot delete topic with existing classes");
+    throw new ApiError(400, "Cannot delete topic with existing classes");
   }
 
   const questionCount = await prisma.question.count({
@@ -389,7 +390,7 @@ export const deleteTopicService = async ({ topicSlug }: DeleteTopicInput) => {
   });
 
   if (questionCount > 0) {
-    throw new Error("Cannot delete topic with existing questions");
+    throw new ApiError(400, "Cannot delete topic with existing questions");
   }
 
   // Delete topic from database
@@ -576,7 +577,7 @@ export const getTopicOverviewWithClassesSummaryService = async ({
   });
 
   if (!topic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   // Get all question IDs assigned to this batch for this topic

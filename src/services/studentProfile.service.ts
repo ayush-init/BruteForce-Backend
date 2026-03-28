@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { ApiError } from "../utils/ApiError";
 
 export const getStudentProfileService = async (studentId: number) => {
     try {
@@ -30,7 +31,7 @@ export const getStudentProfileService = async (studentId: number) => {
         });
 
         if (!student) {
-            throw new Error("Student not found");
+            throw new ApiError(400, "Student not found");
         }
 
         // Get batch question counts for all levels
@@ -159,10 +160,10 @@ export const getStudentProfileService = async (studentId: number) => {
         };
 
     } catch (error) {
-        throw new Error(
-            "Student profile retrieval failed: " +
-            (error instanceof Error ? error.message : String(error))
-        );
+        throw new ApiError(400, 
+                        "Student profile retrieval failed: " +
+                        (error instanceof Error ? error.message : String(error))
+                    );
     }
 };
 
@@ -194,7 +195,7 @@ export const getPublicStudentProfileService = async (username: string) => {
     });
 
     if (!student) {
-        throw new Error("Student not found");
+        throw new ApiError(400, "Student not found");
     }
 
     const studentId = student.id;

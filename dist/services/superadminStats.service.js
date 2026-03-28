@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSuperAdminStatsService = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
+const ApiError_1 = require("../utils/ApiError");
 const getSuperAdminStatsService = async () => {
     try {
         const [totalCities, totalBatches, totalAdmins,] = await Promise.all([
@@ -24,7 +25,7 @@ const getSuperAdminStatsService = async () => {
     }
     catch (error) {
         console.error("System stats error:", error);
-        throw new Error("Failed to fetch system statistics");
+        throw new ApiError_1.ApiError(400, "Failed to fetch system statistics");
     }
 };
 exports.getSuperAdminStatsService = getSuperAdminStatsService;

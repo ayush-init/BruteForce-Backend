@@ -7,6 +7,7 @@ exports.getTopicOverviewWithClassesSummaryService = exports.getTopicsWithBatchPr
 const prisma_1 = __importDefault(require("../config/prisma"));
 const transliteration_1 = require("transliteration");
 const s3_service_1 = require("../services/s3.service");
+const ApiError_1 = require("../utils/ApiError");
 const createTopicService = async ({ topic_name, photo }) => {
     let photoKey = null;
     let photoUrl = null;
@@ -18,7 +19,7 @@ const createTopicService = async ({ topic_name, photo }) => {
             photoKey = uploadResult.key;
         }
         catch (error) {
-            throw new Error("Failed to upload photo to S3");
+            throw new ApiError_1.ApiError(400, "Failed to upload photo to S3");
         }
     }
     // Generate slug from topic name
@@ -52,9 +53,9 @@ const createTopicService = async ({ topic_name, photo }) => {
             }
         }
         if (error.code === "P2002") {
-            throw new Error("Topic already exists");
+            throw new ApiError_1.ApiError(400, "Topic already exists");
         }
-        throw new Error("Failed to create topic");
+        throw new ApiError_1.ApiError(400, "Failed to create topic");
     }
 };
 exports.createTopicService = createTopicService;
@@ -88,7 +89,7 @@ const getTopicsForBatchService = async ({ batchId, query }) => {
         },
     });
     if (!batch) {
-        throw new Error("Batch not found");
+        throw new ApiError_1.ApiError(400, "Batch not found");
     }
     // Get ALL topics for this batch (not just ones with classes)
     // const allTopics = await prisma.topic.findMany({
@@ -231,7 +232,7 @@ const updateTopicService = async ({ topicSlug, topic_name, photo, removePhoto })
         where: { slug: topicSlug },
     });
     if (!existingTopic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     let newPhotoUrl = existingTopic.photo_url;
     let oldPhotoKey = null;
@@ -257,7 +258,7 @@ const updateTopicService = async ({ topicSlug, topic_name, photo, removePhoto })
             }
         }
         catch (error) {
-            throw new Error("Failed to upload photo to S3");
+            throw new ApiError_1.ApiError(400, "Failed to upload photo to S3");
         }
     }
     // Handle topic name update if provided
@@ -267,7 +268,7 @@ const updateTopicService = async ({ topicSlug, topic_name, photo, removePhoto })
             where: { topic_name },
         });
         if (duplicate && duplicate.id !== existingTopic.id) {
-            throw new Error("Topic already exists");
+            throw new ApiError_1.ApiError(400, "Topic already exists");
         }
         const baseSlug = (0, transliteration_1.slugify)(topic_name).toLowerCase();
         finalSlug = baseSlug;
@@ -313,7 +314,7 @@ const updateTopicService = async ({ topicSlug, topic_name, photo, removePhoto })
                 console.error("Failed to cleanup new photo after database error:", cleanupError);
             }
         }
-        throw new Error("Failed to update topic");
+        throw new ApiError_1.ApiError(400, "Failed to update topic");
     }
 };
 exports.updateTopicService = updateTopicService;
@@ -322,19 +323,19 @@ const deleteTopicService = async ({ topicSlug }) => {
         where: { slug: topicSlug },
     });
     if (!topic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     const classCount = await prisma_1.default.class.count({
         where: { topic_id: topic.id },
     });
     if (classCount > 0) {
-        throw new Error("Cannot delete topic with existing classes");
+        throw new ApiError_1.ApiError(400, "Cannot delete topic with existing classes");
     }
     const questionCount = await prisma_1.default.question.count({
         where: { topic_id: topic.id },
     });
     if (questionCount > 0) {
-        throw new Error("Cannot delete topic with existing questions");
+        throw new ApiError_1.ApiError(400, "Cannot delete topic with existing questions");
     }
     // Delete topic from database
     await prisma_1.default.topic.delete({
@@ -463,7 +464,7 @@ const getTopicsWithBatchProgressService = async ({ studentId, batchId, }) => {
     return formattedTopics;
 };
 exports.getTopicsWithBatchProgressService = getTopicsWithBatchProgressService;
-const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, topicSlug, }) => {
+const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, topicSlug, query, }) => {
     // Get topic with batch-specific classes
     const topic = await prisma_1.default.topic.findFirst({
         where: { slug: topicSlug },
@@ -488,7 +489,7 @@ const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, t
         }
     });
     if (!topic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     // Get all question IDs assigned to this batch for this topic
     const assignedQuestionIds = new Set();
@@ -530,7 +531,13 @@ const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, t
             solvedQuestions
         };
     });
-    // Calculate overall topic progress
+    // Apply pagination for classes
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedClasses = classesSummary.slice(startIndex, endIndex);
+    // Calculate overall topic progress (based on all classes, not just paginated)
     const totalTopicQuestions = classesSummary.reduce((sum, cls) => sum + cls.totalQuestions, 0);
     const totalSolvedQuestions = classesSummary.reduce((sum, cls) => sum + cls.solvedQuestions, 0);
     return {
@@ -539,7 +546,15 @@ const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, t
         slug: topic.slug,
         description: topic.description || null,
         photo_url: topic.photo_url || null,
-        classes: classesSummary,
+        classes: paginatedClasses,
+        pagination: {
+            total: classesSummary.length,
+            totalPages: Math.ceil(classesSummary.length / limit),
+            page,
+            limit,
+            hasNext: page < Math.ceil(classesSummary.length / limit),
+            hasPrev: page > 1
+        },
         overallProgress: {
             totalClasses: classesSummary.length,
             totalQuestions: totalTopicQuestions,

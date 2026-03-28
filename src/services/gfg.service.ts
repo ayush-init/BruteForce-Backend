@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ApiError } from "../utils/ApiError";
 
 interface GfgApiResponse {
   status: string;
@@ -29,7 +30,7 @@ export async function fetchGfgData(
   const data = response.data;
 
   if (data.status !== "success") {
-    throw new Error("Invalid GFG handle");
+    throw new ApiError(400, "Invalid GFG handle");
   }
 
   const totalSolved = data.count;

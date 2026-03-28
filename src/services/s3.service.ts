@@ -2,6 +2,7 @@ import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client, S3_BUCKET_NAME } from '../config/s3.config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import path from 'path';
+import { ApiError } from "../utils/ApiError";
 
 export class S3Service {
   /**
@@ -34,7 +35,7 @@ export class S3Service {
       return { url, key };
     } catch (error) {
       console.error('S3 upload error:', error);
-      throw new Error('Failed to upload file to S3');
+      throw new ApiError(400, 'Failed to upload file to S3');
     }
   }
 
@@ -51,7 +52,7 @@ export class S3Service {
       await s3Client.send(new DeleteObjectCommand(params));
     } catch (error) {
       console.error('S3 delete error:', error);
-      throw new Error('Failed to delete file from S3');
+      throw new ApiError(400, 'Failed to delete file from S3');
     }
   }
 
@@ -77,7 +78,7 @@ export class S3Service {
       return { url, key };
     } catch (error) {
       console.error('Presigned URL error:', error);
-      throw new Error('Failed to generate upload URL');
+      throw new ApiError(400, 'Failed to generate upload URL');
     }
   }
 }

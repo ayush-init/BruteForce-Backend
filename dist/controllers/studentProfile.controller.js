@@ -2,29 +2,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPublicStudentProfile = exports.getStudentProfile = void 0;
 const studentProfile_service_1 = require("../services/studentProfile.service");
-const getStudentProfile = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.getStudentProfile = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const studentId = req.user?.id;
         if (!studentId) {
-            return res.status(401).json({ error: "Student ID not found" });
+            throw new ApiError_1.ApiError(401, "Student ID not found");
         }
         const profile = await (0, studentProfile_service_1.getStudentProfileService)(studentId);
         res.json(profile);
     }
     catch (error) {
         console.error("Profile error:", error);
-        res.status(500).json({
-            error: error instanceof Error ? error.message : "Failed to get student profile"
-        });
+        throw new ApiError_1.ApiError(500, error instanceof Error ? error.message : "Failed to get student profile");
     }
-};
-exports.getStudentProfile = getStudentProfile;
-const getPublicStudentProfile = async (req, res) => {
+});
+exports.getPublicStudentProfile = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { username } = req.params;
         const currentUserId = req.user?.id; // From optional auth middleware
         if (!username || Array.isArray(username)) {
-            return res.status(400).json({ error: "Username is required" });
+            throw new ApiError_1.ApiError(400, "Username is required");
         }
         const profile = await (0, studentProfile_service_1.getPublicStudentProfileService)(username);
         // Add canEdit flag if current user is viewing their own profile
@@ -33,9 +32,6 @@ const getPublicStudentProfile = async (req, res) => {
     }
     catch (error) {
         console.error("Public profile error:", error);
-        res.status(500).json({
-            error: error instanceof Error ? error.message : "Failed to get public student profile"
-        });
+        throw new ApiError_1.ApiError(500, error instanceof Error ? error.message : "Failed to get public student profile");
     }
-};
-exports.getPublicStudentProfile = getPublicStudentProfile;
+});

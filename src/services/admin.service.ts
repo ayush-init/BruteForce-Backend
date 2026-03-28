@@ -1,6 +1,7 @@
 import prisma from "../config/prisma";
 import { hashPassword } from "../utils/hashPassword";
 import { AdminRole } from "@prisma/client";
+import { ApiError } from "../utils/ApiError";
 
 export const getCityWiseStats = async () => {
     try {
@@ -64,7 +65,7 @@ export const createAdminService = async (adminData: any) => {
         });
 
         if (existingAdmin) {
-            throw new Error('Email already exists');
+            throw new ApiError(400, 'Email already exists');
         }
 
         // Validate city_id if provided
@@ -73,7 +74,7 @@ export const createAdminService = async (adminData: any) => {
                 where: { id: adminData.city_id }
             });
             if (!city) {
-                throw new Error('City not found');
+                throw new ApiError(400, 'City not found');
             }
         }
 
@@ -83,7 +84,7 @@ export const createAdminService = async (adminData: any) => {
                 where: { id: adminData.batch_id }
             });
             if (!batch) {
-                throw new Error('Batch not found');
+                throw new ApiError(400, 'Batch not found');
             }
             // Automatically set city_id from batch if not explicitly provided
             if (!adminData.city_id) {
@@ -197,7 +198,7 @@ export const updateAdminService = async (id: number, updateData: any) => {
         });
 
         if (!existingAdmin) {
-            throw new Error('Admin not found');
+            throw new ApiError(400, 'Admin not found');
         }
 
         // Only allow specific field updates (name, email, role, batch_id, city_id)
@@ -206,7 +207,7 @@ export const updateAdminService = async (id: number, updateData: any) => {
         const invalidUpdates = Object.keys(updateData).filter(key => !allowedUpdates.includes(key));
         
         if (invalidUpdates.length > 0) {
-            throw new Error(`Only ${allowedUpdates.join(', ')} can be updated. Invalid fields: ${invalidUpdates.join(', ')}`);
+            throw new ApiError(400, `Only ${allowedUpdates.join(', ')} can be updated. Invalid fields: ${invalidUpdates.join(', ')}`);
         }
 
         // Check for duplicate email if updating email
@@ -221,7 +222,7 @@ export const updateAdminService = async (id: number, updateData: any) => {
             });
 
             if (duplicateCheck) {
-                throw new Error('Email already exists');
+                throw new ApiError(400, 'Email already exists');
             }
         }
 
@@ -231,7 +232,7 @@ export const updateAdminService = async (id: number, updateData: any) => {
                 where: { id: updateData.city_id }
             });
             if (!city) {
-                throw new Error('City not found');
+                throw new ApiError(400, 'City not found');
             }
         }
 
@@ -241,7 +242,7 @@ export const updateAdminService = async (id: number, updateData: any) => {
                 where: { id: updateData.batch_id }
             });
             if (!batch) {
-                throw new Error('Batch not found');
+                throw new ApiError(400, 'Batch not found');
             }
             // Automatically set city_id from batch
             updateData.city_id = batch.city_id;
@@ -296,7 +297,7 @@ export const deleteAdminService = async (id: number) => {
         });
 
         if (!existingAdmin) {
-            throw new Error('Admin not found');
+            throw new ApiError(400, 'Admin not found');
         }
 
         // Delete admin

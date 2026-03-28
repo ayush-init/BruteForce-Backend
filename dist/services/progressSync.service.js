@@ -7,6 +7,7 @@ exports.syncOneStudent = syncOneStudent;
 const prisma_1 = __importDefault(require("../config/prisma"));
 const leetcode_service_1 = require("./leetcode.service");
 const gfg_service_1 = require("./gfg.service");
+const ApiError_1 = require("../utils/ApiError");
 function extractSlug(url) {
     return url.split("/problems/")[1]?.split("/")[0];
 }
@@ -21,9 +22,9 @@ async function syncOneStudent(studentId) {
         }
     });
     if (!student)
-        throw new Error("Student not found");
+        throw new ApiError_1.ApiError(400, "Student not found");
     if (!student.batch_id)
-        throw new Error("Student has no batch");
+        throw new ApiError_1.ApiError(400, "Student has no batch");
     // 2️⃣ Load batch curriculum in ONE query
     const batchClasses = await prisma_1.default.class.findMany({
         where: { batch_id: student.batch_id },

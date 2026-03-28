@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchGfgData = fetchGfgData;
 const axios_1 = __importDefault(require("axios"));
+const ApiError_1 = require("../utils/ApiError");
 async function fetchGfgData(handle) {
     const response = await axios_1.default.post("https://practiceapi.geeksforgeeks.org/api/v1/user/problems/submissions/", { handle }, {
         headers: {
@@ -14,7 +15,7 @@ async function fetchGfgData(handle) {
     });
     const data = response.data;
     if (data.status !== "success") {
-        throw new Error("Invalid GFG handle");
+        throw new ApiError_1.ApiError(400, "Invalid GFG handle");
     }
     const totalSolved = data.count;
     const solvedSlugs = [];

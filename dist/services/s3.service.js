@@ -8,6 +8,7 @@ const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_config_1 = require("../config/s3.config");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 const path_1 = __importDefault(require("path"));
+const ApiError_1 = require("../utils/ApiError");
 class S3Service {
     /**
      * Upload file to S3 bucket
@@ -33,7 +34,7 @@ class S3Service {
         }
         catch (error) {
             console.error('S3 upload error:', error);
-            throw new Error('Failed to upload file to S3');
+            throw new ApiError_1.ApiError(400, 'Failed to upload file to S3');
         }
     }
     /**
@@ -49,7 +50,7 @@ class S3Service {
         }
         catch (error) {
             console.error('S3 delete error:', error);
-            throw new Error('Failed to delete file from S3');
+            throw new ApiError_1.ApiError(400, 'Failed to delete file from S3');
         }
     }
     /**
@@ -68,7 +69,7 @@ class S3Service {
         }
         catch (error) {
             console.error('Presigned URL error:', error);
-            throw new Error('Failed to generate upload URL');
+            throw new ApiError_1.ApiError(400, 'Failed to generate upload URL');
         }
     }
 }

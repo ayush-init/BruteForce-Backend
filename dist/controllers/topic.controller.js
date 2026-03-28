@@ -6,7 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTopicProgressByUsername = exports.getTopicOverviewWithClassesSummary = exports.getTopicsWithBatchProgress = exports.createTopicsBulk = exports.deleteTopic = exports.updateTopic = exports.getTopicsForBatch = exports.getAllTopics = exports.createTopic = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
 const topic_service_1 = require("../services/topic.service");
-const createTopic = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.createTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         console.log("Create Topic req.body:", req.body);
         const topic_name = req.body?.topic_name;
@@ -21,26 +23,20 @@ const createTopic = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.createTopic = createTopic;
+});
 // Get All Topics
-const getAllTopics = async (_req, res) => {
+exports.getAllTopics = (0, asyncHandler_1.asyncHandler)(async (_req, res) => {
     try {
         const topics = await (0, topic_service_1.getAllTopicsService)();
         return res.json(topics);
     }
     catch (error) {
-        return res.status(500).json({
-            error: "Failed to fetch topics",
-        });
+        throw new ApiError_1.ApiError(500, "Failed to fetch topics");
     }
-};
-exports.getAllTopics = getAllTopics;
-const getTopicsForBatch = async (req, res) => {
+});
+exports.getTopicsForBatch = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const data = await (0, topic_service_1.getTopicsForBatchService)({
@@ -50,13 +46,10 @@ const getTopicsForBatch = async (req, res) => {
         return res.json(data);
     }
     catch (error) {
-        return res.status(500).json({
-            error: "Failed to fetch topics for batch",
-        });
+        throw new ApiError_1.ApiError(500, "Failed to fetch topics for batch");
     }
-};
-exports.getTopicsForBatch = getTopicsForBatch;
-const updateTopic = async (req, res) => {
+});
+exports.updateTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         console.log("Update Topic req.body:", req.body);
         const topicSlug = req.params.topicSlug;
@@ -78,13 +71,10 @@ const updateTopic = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.updateTopic = updateTopic;
-const deleteTopic = async (req, res) => {
+});
+exports.deleteTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const topicSlug = req.params.topicSlug;
         await (0, topic_service_1.deleteTopicService)({
@@ -95,19 +85,14 @@ const deleteTopic = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.deleteTopic = deleteTopic;
-const createTopicsBulk = async (req, res) => {
+});
+exports.createTopicsBulk = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { topics } = req.body;
         if (!topics || !Array.isArray(topics)) {
-            return res.status(400).json({
-                error: "Topics must be an array",
-            });
+            throw new ApiError_1.ApiError(400, "Topics must be an array");
         }
         // Slug generate helper
         const generateSlug = (name) => name.toLowerCase().trim().replace(/\s+/g, "-");
@@ -125,23 +110,18 @@ const createTopicsBulk = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(500).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(500, error.message);
     }
-};
-exports.createTopicsBulk = createTopicsBulk;
+});
 // Student-specific controller - get topics with batch progress
-const getTopicsWithBatchProgress = async (req, res) => {
+exports.getTopicsWithBatchProgress = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get student info from middleware (extractStudentInfo)
         const student = req.student;
         const batchId = req.batchId;
         const studentId = student?.id;
         if (!studentId || !batchId) {
-            return res.status(400).json({
-                error: "Student authentication required",
-            });
+            throw new ApiError_1.ApiError(400, "Student authentication required");
         }
         const topics = await (0, topic_service_1.getTopicsWithBatchProgressService)({
             studentId,
@@ -150,14 +130,11 @@ const getTopicsWithBatchProgress = async (req, res) => {
         return res.json(topics);
     }
     catch (error) {
-        return res.status(500).json({
-            error: error.message || "Failed to fetch topics with progress",
-        });
+        throw new ApiError_1.ApiError(500, error.message || "Failed to fetch topics with progress");
     }
-};
-exports.getTopicsWithBatchProgress = getTopicsWithBatchProgress;
+});
 // Student-specific controller - get topic overview with classes summary
-const getTopicOverviewWithClassesSummary = async (req, res) => {
+exports.getTopicOverviewWithClassesSummary = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get student info from middleware (extractStudentInfo)
         const student = req.student;
@@ -167,25 +144,21 @@ const getTopicOverviewWithClassesSummary = async (req, res) => {
         // Ensure topicSlug is a string (not string array)
         const slug = Array.isArray(topicSlug) ? topicSlug[0] : topicSlug;
         if (!studentId || !batchId || !slug) {
-            return res.status(400).json({
-                error: "Student authentication and topic slug required",
-            });
+            throw new ApiError_1.ApiError(400, "Student authentication and topic slug required");
         }
         const topicOverview = await (0, topic_service_1.getTopicOverviewWithClassesSummaryService)({
             studentId,
             batchId,
             topicSlug: slug,
+            query: req.query,
         });
         return res.json(topicOverview);
     }
     catch (error) {
-        return res.status(500).json({
-            error: error.message || "Failed to fetch topic overview",
-        });
+        throw new ApiError_1.ApiError(500, error.message || "Failed to fetch topic overview");
     }
-};
-exports.getTopicOverviewWithClassesSummary = getTopicOverviewWithClassesSummary;
-const getTopicProgressByUsername = async (req, res) => {
+});
+exports.getTopicProgressByUsername = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { username } = req.params;
         const { sortBy = 'solved' } = req.query;
@@ -197,9 +170,7 @@ const getTopicProgressByUsername = async (req, res) => {
             }
         });
         if (!student) {
-            return res.status(404).json({
-                error: "Student not found"
-            });
+            throw new ApiError_1.ApiError(404, "Student not found");
         }
         // Get student progress to calculate solved questions
         const studentProgress = await prisma_1.default.studentProgress.findMany({
@@ -264,9 +235,6 @@ const getTopicProgressByUsername = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(500).json({
-            error: error.message || "Failed to fetch topic progress",
-        });
+        throw new ApiError_1.ApiError(500, error.message || "Failed to fetch topic progress");
     }
-};
-exports.getTopicProgressByUsername = getTopicProgressByUsername;
+});

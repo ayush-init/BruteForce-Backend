@@ -5,15 +5,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCityService = exports.updateCityService = exports.getAllCitiesService = exports.createCityService = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
+const ApiError_1 = require("../utils/ApiError");
 const createCityService = async ({ city_name, }) => {
     if (!city_name) {
-        throw new Error("City name is required");
+        throw new ApiError_1.ApiError(400, "City name is required");
     }
     const existingName = await prisma_1.default.city.findUnique({
         where: { city_name },
     });
     if (existingName) {
-        throw new Error("City already exists");
+        throw new ApiError_1.ApiError(400, "City already exists");
     }
     const city = await prisma_1.default.city.create({
         data: {
@@ -51,19 +52,19 @@ const getAllCitiesService = async () => {
 exports.getAllCitiesService = getAllCitiesService;
 const updateCityService = async ({ id, city_name, }) => {
     if (!city_name) {
-        throw new Error("City name is required");
+        throw new ApiError_1.ApiError(400, "City name is required");
     }
     const existingCity = await prisma_1.default.city.findUnique({
         where: { id },
     });
     if (!existingCity) {
-        throw new Error("City not found");
+        throw new ApiError_1.ApiError(400, "City not found");
     }
     const duplicateName = await prisma_1.default.city.findUnique({
         where: { city_name },
     });
     if (duplicateName && duplicateName.id !== existingCity.id) {
-        throw new Error("City name already in use");
+        throw new ApiError_1.ApiError(400, "City name already in use");
     }
     const updatedCity = await prisma_1.default.city.update({
         where: { id: existingCity.id },
@@ -79,19 +80,19 @@ const deleteCityService = async ({ id, }) => {
         where: { id },
     });
     if (!city) {
-        throw new Error("City not found");
+        throw new ApiError_1.ApiError(400, "City not found");
     }
     const batchCount = await prisma_1.default.batch.count({
         where: { city_id: city.id },
     });
     if (batchCount > 0) {
-        throw new Error("Cannot delete city with active batches");
+        throw new ApiError_1.ApiError(400, "Cannot delete city with active batches");
     }
     const studentCount = await prisma_1.default.student.count({
         where: { city_id: city.id },
     });
     if (studentCount > 0) {
-        throw new Error("Cannot delete city with active students");
+        throw new ApiError_1.ApiError(400, "Cannot delete city with active students");
     }
     await prisma_1.default.city.delete({
         where: { id: city.id },

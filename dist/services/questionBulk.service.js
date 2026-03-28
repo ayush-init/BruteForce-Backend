@@ -8,6 +8,7 @@ const client_1 = require("@prisma/client");
 const prisma_1 = __importDefault(require("../config/prisma"));
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const stream_1 = require("stream");
+const ApiError_1 = require("../utils/ApiError");
 const bulkUploadQuestionsService = async (fileBuffer, topicId) => {
     const rows = [];
     const stream = stream_1.Readable.from(fileBuffer);
@@ -19,14 +20,14 @@ const bulkUploadQuestionsService = async (fileBuffer, topicId) => {
             .on("error", reject);
     });
     if (rows.length === 0) {
-        throw new Error("CSV file is empty");
+        throw new ApiError_1.ApiError(400, "CSV file is empty");
     }
     // Validate topic exists
     const topic = await prisma_1.default.topic.findUnique({
         where: { id: topicId },
     });
     if (!topic) {
-        throw new Error("Topic not found");
+        throw new ApiError_1.ApiError(400, "Topic not found");
     }
     const dataToInsert = [];
     for (const row of rows) {

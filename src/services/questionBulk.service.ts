@@ -2,6 +2,7 @@ import { Level, Platform, QuestionType } from "@prisma/client";
 import prisma from "../config/prisma";
 import csv from "csv-parser";
 import { Readable } from "stream";
+import { ApiError } from "../utils/ApiError";
 
 interface CSVRow {
   question_name: string;
@@ -27,7 +28,7 @@ export const bulkUploadQuestionsService = async (
   });
 
   if (rows.length === 0) {
-    throw new Error("CSV file is empty");
+    throw new ApiError(400, "CSV file is empty");
   }
 
   // Validate topic exists
@@ -36,7 +37,7 @@ export const bulkUploadQuestionsService = async (
   });
 
   if (!topic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   const dataToInsert = [];

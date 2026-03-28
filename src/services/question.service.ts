@@ -1,5 +1,6 @@
 import { Platform } from "@prisma/client";
 import prisma from "../config/prisma";
+import { ApiError } from "../utils/ApiError";
 
 interface CreateQuestionInput {
   question_name: string;
@@ -35,7 +36,7 @@ export const createQuestionService = async ({
 }: CreateQuestionInput) => {
 
   if (!question_name || !question_link || !topic_id) {
-    throw new Error("All required fields must be provided");
+    throw new ApiError(400, "All required fields must be provided");
   }
 
   // Validate topic
@@ -44,7 +45,7 @@ export const createQuestionService = async ({
   });
 
   if (!topic) {
-    throw new Error("Topic not found");
+    throw new ApiError(400, "Topic not found");
   }
 
   // Auto detect platform if not provided
@@ -59,7 +60,7 @@ export const createQuestionService = async ({
   });
 
   if (duplicate) {
-    throw new Error("Question link already exists");
+    throw new ApiError(400, "Question link already exists");
   }
 
   const question = await prisma.question.create({
@@ -108,7 +109,7 @@ export const getAllQuestionsService = async ({
     });
     
     if (!topic) {
-      throw new Error("Topic not found");
+      throw new ApiError(400, "Topic not found");
     }
     
     where.topic_id = topic.id;
@@ -198,7 +199,7 @@ export const updateQuestionService = async ({
   });
 
   if (!existing) {
-    throw new Error("Question not found");
+    throw new ApiError(400, "Question not found");
   }
 
   const finalTopicId = topic_id ?? existing.topic_id;
@@ -210,7 +211,7 @@ export const updateQuestionService = async ({
     });
 
     if (!topic) {
-      throw new Error("Topic not found");
+      throw new ApiError(400, "Topic not found");
     }
   }
 
@@ -225,7 +226,7 @@ export const updateQuestionService = async ({
   });
 
   if (duplicate) {
-    throw new Error("Question link already exists");
+    throw new ApiError(400, "Question link already exists");
   }
 
   const updated = await prisma.question.update({
@@ -256,7 +257,7 @@ export const deleteQuestionService = async ({
   });
 
   if (!existing) {
-    throw new Error("Question not found");
+    throw new ApiError(400, "Question not found");
   }
 
   const visibilityCount = await prisma.questionVisibility.count({
@@ -264,9 +265,9 @@ export const deleteQuestionService = async ({
   });
 
   if (visibilityCount > 0) {
-    throw new Error(
-      "Cannot delete question assigned to classes"
-    );
+    throw new ApiError(400, 
+                "Cannot delete question assigned to classes"
+              );
   }
 
   const progressCount = await prisma.studentProgress.count({
@@ -274,9 +275,9 @@ export const deleteQuestionService = async ({
   });
 
   if (progressCount > 0) {
-    throw new Error(
-      "Cannot delete question with student progress"
-    );
+    throw new ApiError(400, 
+                "Cannot delete question with student progress"
+              );
   }
 
   await prisma.question.delete({
@@ -305,7 +306,7 @@ export const getAssignedQuestionsService = async (query: any) => {
       });
 
       if (!cityExists) {
-        throw new Error("Invalid city");
+        throw new ApiError(400, "Invalid city");
       }
 
       batchFilter.city = {
@@ -325,7 +326,7 @@ export const getAssignedQuestionsService = async (query: any) => {
       });
 
       if (!batchExists) {
-        throw new Error("Invalid batch");
+        throw new ApiError(400, "Invalid batch");
       }
 
       batchFilter.batch_name = batch;
@@ -339,7 +340,7 @@ export const getAssignedQuestionsService = async (query: any) => {
       const parsedYear = Number(year);
 
       if (isNaN(parsedYear)) {
-        throw new Error("Year must be a number");
+        throw new ApiError(400, "Year must be a number");
       }
 
       batchFilter.year = parsedYear;
@@ -355,7 +356,7 @@ export const getAssignedQuestionsService = async (query: any) => {
     });
 
     if (batch && batches.length === 0) {
-      throw new Error("Batch not found");
+      throw new ApiError(400, "Batch not found");
     }
 
     const batchIds = batches.map(b => b.id);
@@ -430,7 +431,7 @@ export const getAssignedQuestionsService = async (query: any) => {
 
   } catch (error) {
 
-    throw new Error("Failed to fetch assigned questions");
+    throw new ApiError(400, "Failed to fetch assigned questions");
 
   }
 };

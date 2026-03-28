@@ -2,36 +2,39 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getClassDetailsWithFullQuestions = exports.deleteClass = exports.updateClass = exports.getClassDetails = exports.createClassInTopic = exports.getClassesByTopic = void 0;
 const class_service_1 = require("../services/class.service");
-const getClassesByTopic = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.getClassesByTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
+        // Extract pagination and search parameters
+        const { page = '1', limit = '20', search = '' } = req.query;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const searchQuery = search;
         const classes = await (0, class_service_1.getClassesByTopicService)({
             batchId: batch.id,
-            topicSlug: topicSlugParam, // string
+            topicSlug: topicSlugParam,
+            page: pageNum,
+            limit: limitNum,
+            search: searchQuery,
         });
         return res.json(classes);
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.getClassesByTopic = getClassesByTopic;
-const createClassInTopic = async (req, res) => {
+});
+exports.createClassInTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
         const { class_name, description, pdf_url, duration_minutes, class_date, } = req.body;
         const newClass = await (0, class_service_1.createClassInTopicService)({
@@ -49,26 +52,19 @@ const createClassInTopic = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.createClassInTopic = createClassInTopic;
-const getClassDetails = async (req, res) => {
+});
+exports.getClassDetails = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         const classSlugParam = req.params.classSlug;
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
         if (typeof classSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid class slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid class slug");
         }
         const classDetails = await (0, class_service_1.getClassDetailsService)({
             batchId: batch.id,
@@ -78,26 +74,19 @@ const getClassDetails = async (req, res) => {
         return res.json(classDetails);
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.getClassDetails = getClassDetails;
-const updateClass = async (req, res) => {
+});
+exports.updateClass = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         const classSlug = req.params.classSlug;
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
         if (typeof classSlug !== "string") {
-            return res.status(400).json({
-                error: "Invalid class slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid class slug");
         }
         const updated = await (0, class_service_1.updateClassService)({
             batchId: batch.id,
@@ -111,26 +100,19 @@ const updateClass = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.updateClass = updateClass;
-const deleteClass = async (req, res) => {
+});
+exports.deleteClass = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const batch = req.batch;
         const topicSlugParam = req.params.topicSlug;
         const classSlug = req.params.classSlug;
         if (typeof topicSlugParam !== "string") {
-            return res.status(400).json({
-                error: "Invalid topic slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid topic slug");
         }
         if (typeof classSlug !== "string") {
-            return res.status(400).json({
-                error: "Invalid class slug",
-            });
+            throw new ApiError_1.ApiError(400, "Invalid class slug");
         }
         await (0, class_service_1.deleteClassService)({
             batchId: batch.id,
@@ -142,14 +124,11 @@ const deleteClass = async (req, res) => {
         });
     }
     catch (error) {
-        return res.status(400).json({
-            error: error.message,
-        });
+        throw new ApiError_1.ApiError(400, error.message);
     }
-};
-exports.deleteClass = deleteClass;
+});
 // Student-specific controller - get class details with full questions array
-const getClassDetailsWithFullQuestions = async (req, res) => {
+exports.getClassDetailsWithFullQuestions = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get student info from middleware (extractStudentInfo)
         const student = req.student;
@@ -160,22 +139,18 @@ const getClassDetailsWithFullQuestions = async (req, res) => {
         const topic = Array.isArray(topicSlug) ? topicSlug[0] : topicSlug;
         const cls = Array.isArray(classSlug) ? classSlug[0] : classSlug;
         if (!studentId || !batchId || !topic || !cls) {
-            return res.status(400).json({
-                error: "Student authentication and topic/class slugs required",
-            });
+            throw new ApiError_1.ApiError(400, "Student authentication and topic/class slugs required");
         }
         const classDetails = await (0, class_service_1.getClassDetailsWithFullQuestionsService)({
             studentId,
             batchId,
             topicSlug: topic,
             classSlug: cls,
+            query: req.query,
         });
         return res.json(classDetails);
     }
     catch (error) {
-        return res.status(500).json({
-            error: error.message || "Failed to fetch class details",
-        });
+        throw new ApiError_1.ApiError(500, error.message || "Failed to fetch class details");
     }
-};
-exports.getClassDetailsWithFullQuestions = getClassDetailsWithFullQuestions;
+});

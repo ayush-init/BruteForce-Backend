@@ -11,23 +11,21 @@ const google_auth_library_1 = require("google-auth-library");
 const otp_util_1 = require("../utils/otp.util");
 const email_util_1 = require("../utils/email.util");
 const emailValidation_util_1 = require("../utils/emailValidation.util");
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
 const googleClient = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
 // Student Registration
-const registerStudent = async (req, res) => {
+exports.registerStudent = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { name, email, username, password, enrollment_id, batch_id, leetcode_id, gfg_id } = req.body;
         // Validation
         if (!name || !email || !username || !password || !batch_id) {
-            return res.status(400).json({
-                error: 'Name, email, username, password, and batch_id are required'
-            });
+            throw new ApiError_1.ApiError(400, 'Name, email, username, password, and batch_id are required');
         }
         // Validate email domain
         const emailValidation = (0, emailValidation_util_1.validateEmail)(email);
         if (!emailValidation.isValid) {
-            return res.status(400).json({
-                error: emailValidation.error
-            });
+            throw new ApiError_1.ApiError(400, emailValidation.error);
         }
         // Check existing user
         const existingStudent = await prisma_1.default.student.findFirst({
@@ -36,9 +34,7 @@ const registerStudent = async (req, res) => {
             },
         });
         if (existingStudent) {
-            return res.status(400).json({
-                error: 'Email, username, or enrollment_id already exists'
-            });
+            throw new ApiError_1.ApiError(400, 'Email, username, or enrollment_id already exists');
         }
         // Get batch information to fetch city_id
         const batch = await prisma_1.default.batch.findUnique({
@@ -46,7 +42,7 @@ const registerStudent = async (req, res) => {
             include: { city: true }
         });
         if (!batch) {
-            return res.status(400).json({ error: 'Invalid batch_id' });
+            throw new ApiError_1.ApiError(400, 'Invalid batch_id');
         }
         // Hash password
         const password_hash = await (0, password_util_1.hashPassword)(password);
@@ -97,26 +93,21 @@ const registerStudent = async (req, res) => {
     }
     catch (error) {
         console.error('Register error:', error);
-        res.status(500).json({ error: 'Failed to register student' });
+        throw new ApiError_1.ApiError(500, 'Failed to register student');
     }
-};
-exports.registerStudent = registerStudent;
+});
 // Student Login
-const loginStudent = async (req, res) => {
+exports.loginStudent = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { email, password, username } = req.body;
         if ((!email && !username) || !password) {
-            return res.status(400).json({
-                error: 'Either email or username with password are required'
-            });
+            throw new ApiError_1.ApiError(400, 'Either email or username with password are required');
         }
         // Validate email domain if email is provided
         if (email) {
             const emailValidation = (0, emailValidation_util_1.validateEmail)(email);
             if (!emailValidation.isValid) {
-                return res.status(400).json({
-                    error: emailValidation.error
-                });
+                throw new ApiError_1.ApiError(400, emailValidation.error);
             }
         }
         // Find student by email or username
@@ -133,12 +124,12 @@ const loginStudent = async (req, res) => {
             },
         });
         if (!student || !student.password_hash) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            throw new ApiError_1.ApiError(401, 'Invalid credentials');
         }
         // Compare password
         const isValidPassword = await (0, password_util_1.comparePassword)(password, student.password_hash);
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            throw new ApiError_1.ApiError(401, 'Invalid credentials');
         }
         const accessToken = (0, jwt_util_1.generateAccessToken)({
             id: student.id,
@@ -191,16 +182,15 @@ const loginStudent = async (req, res) => {
     }
     catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ error: 'Failed to login' });
+        throw new ApiError_1.ApiError(500, 'Failed to login');
     }
-};
-exports.loginStudent = loginStudent;
+});
 // Admin/Teacher Registration
-const registerAdmin = async (req, res) => {
+exports.registerAdmin = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
         if (!name || !email || !password || !role) {
-            return res.status(400).json({ error: 'All fields are required' });
+            throw new ApiError_1.ApiError(400, 'All fields are required');
         }
         // Check existing admin
         const existingAdmin = await prisma_1.default.admin.findFirst({
@@ -209,13 +199,13 @@ const registerAdmin = async (req, res) => {
             },
         });
         if (existingAdmin) {
-            return res.status(400).json({ error: 'Email already exists' });
+            throw new ApiError_1.ApiError(400, 'Email already exists');
         }
         if (req.user?.role !== "SUPERADMIN") {
-            return res.status(403).json({ error: "Only SuperAdmin can create admin" });
+            throw new ApiError_1.ApiError(403, "Only SuperAdmin can create admin");
         }
         if (role !== "TEACHER" && role !== "INTERN" && role !== "SUPERADMIN") {
-            return res.status(400).json({ error: "Invalid role type" });
+            throw new ApiError_1.ApiError(400, "Invalid role type");
         }
         const password_hash = await (0, password_util_1.hashPassword)(password);
         const admin = await prisma_1.default.admin.create({
@@ -255,16 +245,15 @@ const registerAdmin = async (req, res) => {
     }
     catch (error) {
         console.error('Admin register error:', error);
-        res.status(500).json({ error: 'Failed to register admin' });
+        throw new ApiError_1.ApiError(500, 'Failed to register admin');
     }
-};
-exports.registerAdmin = registerAdmin;
+});
 // Admin Login
-const loginAdmin = async (req, res) => {
+exports.loginAdmin = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
+            throw new ApiError_1.ApiError(400, 'Email and password are required');
         }
         const admin = await prisma_1.default.admin.findUnique({
             where: { email },
@@ -284,11 +273,11 @@ const loginAdmin = async (req, res) => {
             }
         });
         if (!admin || !admin.password_hash) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            throw new ApiError_1.ApiError(401, 'Invalid credentials');
         }
         const isValidPassword = await (0, password_util_1.comparePassword)(password, admin.password_hash);
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            throw new ApiError_1.ApiError(401, 'Invalid credentials');
         }
         const accessToken = (0, jwt_util_1.generateAccessToken)({
             id: admin.id,
@@ -330,17 +319,16 @@ const loginAdmin = async (req, res) => {
     }
     catch (error) {
         console.error('Admin login error:', error);
-        res.status(500).json({ error: 'Failed to login' });
+        throw new ApiError_1.ApiError(500, 'Failed to login');
     }
-};
-exports.loginAdmin = loginAdmin;
+});
 // Adding  Referesh Token API
-const refreshToken = async (req, res) => {
+exports.refreshToken = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get refresh token from HTTP-only cookie
         const refreshToken = req.cookies.refreshToken;
         if (!refreshToken) {
-            return res.status(400).json({ error: 'Refresh token required' });
+            throw new ApiError_1.ApiError(400, 'Refresh token required');
         }
         const decoded = (0, jwt_util_1.verifyRefreshToken)(refreshToken);
         let user;
@@ -364,7 +352,7 @@ const refreshToken = async (req, res) => {
             });
         }
         if (!user || user.refresh_token !== refreshToken) {
-            return res.status(403).json({ error: 'Invalid refresh token' });
+            throw new ApiError_1.ApiError(403, 'Invalid refresh token');
         }
         const newAccessToken = (0, jwt_util_1.generateAccessToken)({
             id: user.id,
@@ -388,15 +376,14 @@ const refreshToken = async (req, res) => {
         res.json({ accessToken: newAccessToken });
     }
     catch (error) {
-        res.status(403).json({ error: 'Invalid refresh token' });
+        throw new ApiError_1.ApiError(403, 'Invalid refresh token');
     }
-};
-exports.refreshToken = refreshToken;
-const googleLogin = async (req, res) => {
+});
+exports.googleLogin = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { idToken } = req.body;
         if (!idToken) {
-            return res.status(400).json({ error: "ID token required" });
+            throw new ApiError_1.ApiError(400, "ID token required");
         }
         // Verify token with Google using official google-auth-library
         async function verifyIdToken(idToken) {
@@ -415,16 +402,14 @@ const googleLogin = async (req, res) => {
         }
         const payload = await verifyIdToken(idToken);
         if (!payload?.email) {
-            return res.status(400).json({ error: "Invalid Google token" });
+            throw new ApiError_1.ApiError(400, "Invalid Google token");
         }
         const email = payload.email;
         const googleId = payload.sub;
         // Validate email domain
         const emailValidation = (0, emailValidation_util_1.validateEmail)(email);
         if (!emailValidation.isValid) {
-            return res.status(400).json({
-                error: emailValidation.error
-            });
+            throw new ApiError_1.ApiError(400, emailValidation.error);
         }
         // Check if student exists
         const student = await prisma_1.default.student.findUnique({
@@ -435,9 +420,7 @@ const googleLogin = async (req, res) => {
             },
         });
         if (!student) {
-            return res.status(403).json({
-                error: "Student not registered by admin",
-            });
+            throw new ApiError_1.ApiError(403, "Student not registered by admin");
         }
         // Update google_id if not set
         if (!student.google_id) {
@@ -470,13 +453,13 @@ const googleLogin = async (req, res) => {
         });
         // For Google Auth
         // Set refresh token in HTTP-only cookie
-        // res.cookie('refreshToken', refreshToken, {
-        //   httpOnly: true,
-        //   secure: process.env.NODE_ENV === 'production', // Only secure in production
-        //   sameSite: 'strict',
-        //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        //   path: '/'
-        // });
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Only secure in production
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: '/'
+        });
         res.json({
             message: "Google login successful",
             accessToken,
@@ -492,12 +475,11 @@ const googleLogin = async (req, res) => {
     }
     catch (error) {
         console.error("Google login error:", error);
-        res.status(401).json({ error: "Invalid Google token" });
+        throw new ApiError_1.ApiError(401, "Invalid Google token");
     }
-};
-exports.googleLogin = googleLogin;
+});
 // Student Logout
-const logoutStudent = async (req, res) => {
+exports.logoutStudent = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get student info from middleware
         const studentId = req.student?.id;
@@ -516,12 +498,11 @@ const logoutStudent = async (req, res) => {
     }
     catch (error) {
         console.error("Student logout error:", error);
-        res.status(500).json({ error: "Logout failed" });
+        throw new ApiError_1.ApiError(500, "Logout failed");
     }
-};
-exports.logoutStudent = logoutStudent;
+});
 // Admin Logout
-const logoutAdmin = async (req, res) => {
+exports.logoutAdmin = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get admin info from middleware
         const adminId = req.admin?.id;
@@ -540,23 +521,20 @@ const logoutAdmin = async (req, res) => {
     }
     catch (error) {
         console.error("Admin logout error:", error);
-        res.status(500).json({ error: "Logout failed" });
+        throw new ApiError_1.ApiError(500, "Logout failed");
     }
-};
-exports.logoutAdmin = logoutAdmin;
+});
 // Forgot Password - Send OTP
-const forgotPassword = async (req, res) => {
+exports.forgotPassword = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) {
-            return res.status(400).json({ error: 'Email is required' });
+            throw new ApiError_1.ApiError(400, 'Email is required');
         }
         // Validate email domain
         const emailValidation = (0, emailValidation_util_1.validateEmail)(email);
         if (!emailValidation.isValid) {
-            return res.status(400).json({
-                error: emailValidation.error
-            });
+            throw new ApiError_1.ApiError(400, emailValidation.error);
         }
         // Check if user exists (student or admin)
         let user = null;
@@ -591,38 +569,31 @@ const forgotPassword = async (req, res) => {
     }
     catch (error) {
         console.error('Forgot password error:', error);
-        res.status(500).json({ error: 'Failed to send OTP' });
+        throw new ApiError_1.ApiError(500, 'Failed to send OTP');
     }
-};
-exports.forgotPassword = forgotPassword;
+});
 // Reset Password - Verify OTP and reset password
-const resetPassword = async (req, res) => {
+exports.resetPassword = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
         if (!email || !otp || !newPassword) {
-            return res.status(400).json({
-                error: 'Email, OTP, and new password are required'
-            });
+            throw new ApiError_1.ApiError(400, 'Email, OTP, and new password are required');
         }
         // Validate email domain
         const emailValidation = (0, emailValidation_util_1.validateEmail)(email);
         if (!emailValidation.isValid) {
-            return res.status(400).json({
-                error: emailValidation.error
-            });
+            throw new ApiError_1.ApiError(400, emailValidation.error);
         }
         // Validate password strength
         if (newPassword.length < 6) {
-            return res.status(400).json({
-                error: 'Password must be at least 6 characters long'
-            });
+            throw new ApiError_1.ApiError(400, 'Password must be at least 6 characters long');
         }
         // Verify OTP
         console.log(`Attempting to validate OTP: ${otp} for email: ${email}`);
         const isValidOTP = await (0, otp_util_1.validateOTP)(email, otp);
         console.log(`OTP validation result: ${isValidOTP}`);
         if (!isValidOTP) {
-            return res.status(400).json({ error: 'Invalid or expired OTP' });
+            throw new ApiError_1.ApiError(400, 'Invalid or expired OTP');
         }
         // Find user and update password
         let user = null;
@@ -638,15 +609,13 @@ const resetPassword = async (req, res) => {
             }
         }
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            throw new ApiError_1.ApiError(404, 'User not found');
         }
         // Check if new password is same as current password (only if user has existing password)
         if (user.password_hash) {
             const isSamePassword = await (0, password_util_1.comparePassword)(newPassword, user.password_hash);
             if (isSamePassword) {
-                return res.status(400).json({
-                    error: 'New password cannot be the same as your current password'
-                });
+                throw new ApiError_1.ApiError(400, 'New password cannot be the same as your current password');
             }
         }
         // Hash new password
@@ -670,7 +639,6 @@ const resetPassword = async (req, res) => {
     }
     catch (error) {
         console.error('Reset password error:', error);
-        res.status(500).json({ error: 'Failed to reset password' });
+        throw new ApiError_1.ApiError(500, 'Failed to reset password');
     }
-};
-exports.resetPassword = resetPassword;
+});

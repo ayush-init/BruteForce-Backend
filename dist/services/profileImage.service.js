@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProfileImageService = void 0;
 const s3_service_1 = require("../services/s3.service");
 const prisma_1 = __importDefault(require("../config/prisma"));
+const ApiError_1 = require("../utils/ApiError");
 // Helper function to extract S3 key from URL
 function getS3KeyFromUrl(url) {
     if (!url)
@@ -25,7 +26,7 @@ class ProfileImageService {
                 select: { profile_image_url: true }
             });
             if (!student) {
-                throw new Error('Student not found');
+                throw new ApiError_1.ApiError(400, 'Student not found');
             }
             // Delete old profile image if exists
             if (student.profile_image_url) {
@@ -57,7 +58,7 @@ class ProfileImageService {
                 select: { profile_image_url: true }
             });
             if (!student) {
-                throw new Error('Student not found');
+                throw new ApiError_1.ApiError(400, 'Student not found');
             }
             // Delete from S3 if image exists
             if (student.profile_image_url) {

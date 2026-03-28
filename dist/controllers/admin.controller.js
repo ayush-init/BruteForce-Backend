@@ -7,7 +7,8 @@ exports.getRolesController = exports.deleteAdminController = exports.updateAdmin
 const prisma_1 = __importDefault(require("../config/prisma"));
 const client_1 = require("@prisma/client");
 const admin_service_1 = require("../services/admin.service");
-const getCurrentAdminController = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+exports.getCurrentAdminController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get admin info from middleware (extracted from token)
         const adminInfo = req.admin;
@@ -17,6 +18,7 @@ const getCurrentAdminController = async (req, res) => {
                 message: "Admin not authenticated"
             });
         }
+        //Ading line
         // Get full admin details from database
         const admin = await prisma_1.default.admin.findUnique({
             where: { id: adminInfo.id },
@@ -69,9 +71,8 @@ const getCurrentAdminController = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to fetch current admin"
         });
     }
-};
-exports.getCurrentAdminController = getCurrentAdminController;
-const getAdminStats = async (req, res) => {
+});
+exports.getAdminStats = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { batch_id } = req.body;
         // Validate batch_id
@@ -177,9 +178,8 @@ const getAdminStats = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to fetch batch statistics"
         });
     }
-};
-exports.getAdminStats = getAdminStats;
-const createAdminController = async (req, res) => {
+});
+exports.createAdminController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const adminData = req.body;
         // Validate required fields (removed username)
@@ -203,9 +203,8 @@ const createAdminController = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to create admin"
         });
     }
-};
-exports.createAdminController = createAdminController;
-const getAllAdminsController = async (req, res) => {
+});
+exports.getAllAdminsController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const filters = req.query;
         // Default to TEACHER role if no role filter is provided (SuperAdmin context)
@@ -225,9 +224,8 @@ const getAllAdminsController = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to fetch admins"
         });
     }
-};
-exports.getAllAdminsController = getAllAdminsController;
-const updateAdminController = async (req, res) => {
+});
+exports.updateAdminController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
@@ -252,9 +250,8 @@ const updateAdminController = async (req, res) => {
             message: error.message || "Failed to update admin"
         });
     }
-};
-exports.updateAdminController = updateAdminController;
-const deleteAdminController = async (req, res) => {
+});
+exports.deleteAdminController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { id } = req.params;
         if (!id || isNaN(parseInt(id))) {
@@ -277,9 +274,8 @@ const deleteAdminController = async (req, res) => {
             message: error.message || "Failed to delete admin"
         });
     }
-};
-exports.deleteAdminController = deleteAdminController;
-const getRolesController = async (req, res) => {
+});
+exports.getRolesController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const roles = Object.values(client_1.AdminRole);
         return res.status(200).json({
@@ -294,5 +290,4 @@ const getRolesController = async (req, res) => {
             message: "Failed to fetch roles"
         });
     }
-};
-exports.getRolesController = getRolesController;
+});

@@ -2,16 +2,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteProfileImage = exports.uploadProfileImage = void 0;
 const profileImage_service_1 = require("../services/profileImage.service");
-const uploadProfileImage = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.uploadProfileImage = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const studentId = req.user?.id;
         if (!studentId) {
-            return res.status(401).json({ error: 'Student ID not found' });
+            throw new ApiError_1.ApiError(401, 'Student ID not found');
         }
         if (!req.file) {
-            return res.status(400).json({
-                error: 'No file uploaded. Please provide a file with field name "file"'
-            });
+            throw new ApiError_1.ApiError(400, 'No file uploaded. Please provide a file with field name "file"');
         }
         const result = await profileImage_service_1.ProfileImageService.uploadProfileImage(studentId, req.file);
         res.status(201).json({
@@ -26,17 +26,14 @@ const uploadProfileImage = async (req, res) => {
     }
     catch (error) {
         console.error('Upload profile image error:', error);
-        res.status(500).json({
-            error: error instanceof Error ? error.message : 'Failed to upload profile image'
-        });
+        throw new ApiError_1.ApiError(500, error instanceof Error ? error.message : 'Failed to upload profile image');
     }
-};
-exports.uploadProfileImage = uploadProfileImage;
-const deleteProfileImage = async (req, res) => {
+});
+exports.deleteProfileImage = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const studentId = req.user?.id;
         if (!studentId) {
-            return res.status(401).json({ error: 'Student ID not found' });
+            throw new ApiError_1.ApiError(401, 'Student ID not found');
         }
         await profileImage_service_1.ProfileImageService.deleteProfileImage(studentId);
         res.json({
@@ -46,9 +43,6 @@ const deleteProfileImage = async (req, res) => {
     }
     catch (error) {
         console.error('Delete profile image error:', error);
-        res.status(500).json({
-            error: error instanceof Error ? error.message : 'Failed to delete profile image'
-        });
+        throw new ApiError_1.ApiError(500, error instanceof Error ? error.message : 'Failed to delete profile image');
     }
-};
-exports.deleteProfileImage = deleteProfileImage;
+});

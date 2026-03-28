@@ -5,6 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import { NotFoundError } from './utils/ApiError';
 import authRoutes from './routes/auth.routes';
 import { errorHandler } from './middlewares/errorHandler.middleware';
 import studentRoutes from "./routes/student.routes";
@@ -57,6 +58,11 @@ app.use('/csv-ui', express.static(path.join(__dirname, 'csv_ui')));
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// 404 Fallback for unknown routes
+app.use((req, res, next) => {
+  next(new NotFoundError(`Route ${req.originalUrl} not found`));
 });
 
 // Error handler (must be last)

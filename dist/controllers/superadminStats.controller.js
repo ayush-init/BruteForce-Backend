@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSuperAdminStats = exports.getCurrentSuperAdminController = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
 const superadminStats_service_1 = require("../services/superadminStats.service");
-const getCurrentSuperAdminController = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+exports.getCurrentSuperAdminController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Get superadmin info from middleware (extracted from token)
         const superadminInfo = req.admin;
@@ -49,9 +50,8 @@ const getCurrentSuperAdminController = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to fetch current superadmin"
         });
     }
-};
-exports.getCurrentSuperAdminController = getCurrentSuperAdminController;
-const getSuperAdminStats = async (req, res) => {
+});
+exports.getSuperAdminStats = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const stats = await (0, superadminStats_service_1.getSuperAdminStatsService)();
         res.json({
@@ -66,5 +66,4 @@ const getSuperAdminStats = async (req, res) => {
             message: error instanceof Error ? error.message : "Failed to fetch system statistics"
         });
     }
-};
-exports.getSuperAdminStats = getSuperAdminStats;
+});

@@ -10,6 +10,7 @@ const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const yamljs_1 = __importDefault(require("yamljs"));
 const path_1 = __importDefault(require("path"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const ApiError_1 = require("./utils/ApiError");
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const errorHandler_middleware_1 = require("./middlewares/errorHandler.middleware");
 const student_routes_1 = __importDefault(require("./routes/student.routes"));
@@ -54,6 +55,10 @@ app.use('/csv-ui', express_1.default.static(path_1.default.join(__dirname, 'csv_
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+// 404 Fallback for unknown routes
+app.use((req, res, next) => {
+    next(new ApiError_1.NotFoundError(`Route ${req.originalUrl} not found`));
 });
 // Error handler (must be last)
 app.use(errorHandler_middleware_1.errorHandler);

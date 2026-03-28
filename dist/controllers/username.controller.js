@@ -5,11 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUsername = exports.checkUsernameAvailability = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
-const checkUsernameAvailability = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const ApiError_1 = require("../utils/ApiError");
+exports.checkUsernameAvailability = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { username } = req.query;
         if (!username || typeof username !== 'string') {
-            return res.status(400).json({ error: "Username parameter is required" });
+            throw new ApiError_1.ApiError(400, "Username parameter is required");
         }
         // Trim whitespace
         const trimmedUsername = username.trim();
@@ -28,11 +30,10 @@ const checkUsernameAvailability = async (req, res) => {
     }
     catch (error) {
         console.error("Error checking username availability:", error);
-        res.status(500).json({ error: "Failed to check username availability" });
+        throw new ApiError_1.ApiError(500, "Failed to check username availability");
     }
-};
-exports.checkUsernameAvailability = checkUsernameAvailability;
-const updateUsername = async (req, res) => {
+});
+exports.updateUsername = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         console.log('Username update request received');
         console.log('User from token:', req.user);
@@ -41,11 +42,11 @@ const updateUsername = async (req, res) => {
         const { username } = req.body;
         console.log('Request body:', { username });
         if (!username) {
-            return res.status(400).json({ error: "Username is required" });
+            throw new ApiError_1.ApiError(400, "Username is required");
         }
         if (!studentId) {
             console.log('No student ID found in request');
-            return res.status(401).json({ error: "Student not authenticated" });
+            throw new ApiError_1.ApiError(401, "Student not authenticated");
         }
         // Check if username is already taken
         const existingStudent = await prisma_1.default.student.findFirst({
@@ -55,7 +56,7 @@ const updateUsername = async (req, res) => {
             }
         });
         if (existingStudent) {
-            return res.status(400).json({ error: "Username is already taken" });
+            throw new ApiError_1.ApiError(400, "Username is already taken");
         }
         // Update username
         const updated = await prisma_1.default.student.update({
@@ -76,7 +77,6 @@ const updateUsername = async (req, res) => {
     }
     catch (error) {
         console.error("Error updating username:", error);
-        res.status(500).json({ error: "Failed to update username" });
+        throw new ApiError_1.ApiError(500, "Failed to update username");
     }
-};
-exports.updateUsername = updateUsername;
+});

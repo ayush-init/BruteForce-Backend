@@ -9,214 +9,223 @@ import {
 
 import { createStudentService } from "../services/student.service";
 import prisma from "../config/prisma";
+import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError";
 
-export const getCurrentStudent = async (req: Request, res: Response) => {
-    try {
-        const studentId = (req as any).user?.id;
-        
-        if (!studentId) {
-            return res.status(401).json({ success: false, message: "Student not authenticated" });
-        }
+export const getCurrentStudent = asyncHandler(async (req: Request, res: Response) => {
+            try {
+                const studentId = (req as any).user?.id;
+                
+                if (!studentId) {
+                    return res.status(401).json({ success: false, message: "Student not authenticated" });
+                }
 
-        const student = await prisma.student.findUnique({
-            where: { id: studentId },
-            select: {
-                id: true,
-                name: true,
-                username: true,
-                city: {
+                const student = await prisma.student.findUnique({
+                    where: { id: studentId },
                     select: {
                         id: true,
-                        city_name: true
+                        name: true,
+                        username: true,
+                        city: {
+                            select: {
+                                id: true,
+                                city_name: true
+                            }
+                        },
+                        batch: {
+                            select: {
+                                id: true,
+                                batch_name: true,
+                                year: true
+                            }
+                        },
+                        email: true,
+                        profile_image_url: true,
+                        leetcode_id: true,
+                        gfg_id: true
                     }
-                },
-                batch: {
-                    select: {
-                        id: true,
-                        batch_name: true,
-                        year: true
+                });
+
+                if (!student) {
+                    return res.status(404).json({ success: false, message: "Student not found" });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        id: student.id,
+                        name: student.name,
+                        username: student.username,
+                        city: student.city,
+                        batch: student.batch,
+                        email: student.email,
+                        profileImageUrl: student.profile_image_url,
+                        leetcode: student.leetcode_id,
+                        gfg: student.gfg_id
                     }
-                },
-                email: true,
-                profile_image_url: true,
-                leetcode_id: true,
-                gfg_id: true
+                });
+            } catch (error) {
+    if (error instanceof ApiError) throw error;
+                console.error("Get current student error:", error);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: error instanceof Error ? error.message : "Failed to fetch current student" 
+                });
             }
         });
 
-        if (!student) {
-            return res.status(404).json({ success: false, message: "Student not found" });
-        }
+export const updateStudentDetails = asyncHandler(async (req: Request, res: Response) => {
+            try {
 
-        return res.status(200).json({
-            success: true,
-            data: {
-                id: student.id,
-                name: student.name,
-                username: student.username,
-                city: student.city,
-                batch: student.batch,
-                email: student.email,
-                profileImageUrl: student.profile_image_url,
-                leetcode: student.leetcode_id,
-                gfg: student.gfg_id
+                const { id } = req.params;
+
+                const student = await updateStudentDetailsService(
+                    Number(id),
+                    req.body
+                );
+
+                return res.json({
+                    message: "Student updated successfully",
+                    data: student
+                });
+
+            } catch (error: any) {
+    if (error instanceof ApiError) throw error;
+
+                if (error.message === "Student not found") {
+                    return res.status(404).json({ message: error.message });
+                }
+
+                return res.status(500).json({
+                    message: "Something went wrong",
+                    error: error.message
+                });
             }
         });
-    } catch (error) {
-        console.error("Get current student error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: error instanceof Error ? error.message : "Failed to fetch current student" 
-        });
-    }
-};
-
-export const updateStudentDetails = async (req: Request, res: Response) => {
-    try {
-
-        const { id } = req.params;
-
-        const student = await updateStudentDetailsService(
-            Number(id),
-            req.body
-        );
-
-        return res.json({
-            message: "Student updated successfully",
-            data: student
-        });
-
-    } catch (error: any) {
-
-        if (error.message === "Student not found") {
-            return res.status(404).json({ message: error.message });
-        }
-
-        return res.status(500).json({
-            message: "Something went wrong",
-            error: error.message
-        });
-    }
-};
 
 
-export const deleteStudentDetails = async (req: Request, res: Response) => {
-    try {
+export const deleteStudentDetails = asyncHandler(async (req: Request, res: Response) => {
+            try {
 
-        const { id } = req.params;
+                const { id } = req.params;
 
-        const studentId = Number(id);
+                const studentId = Number(id);
 
-        if (isNaN(studentId)) {
-            return res.status(400).json({
-                message: "Invalid student id"
-            });
-        }
+                if (isNaN(studentId)) {
+                    return res.status(400).json({
+                        message: "Invalid student id"
+                    });
+                }
 
-        await deleteStudentDetailsService(studentId);
+                await deleteStudentDetailsService(studentId);
 
-        return res.status(200).json({
-            message: "Student deleted permanently"
+                return res.status(200).json({
+                    message: "Student deleted permanently"
+                });
+
+            } catch (error: any) {
+    if (error instanceof ApiError) throw error;
+
+                if (error.message === "Student not found") {
+                    return res.status(404).json({ message: error.message });
+                }
+
+                return res.status(500).json({
+                    message: "Something went wrong",
+                    error: error.message
+                });
+            }
         });
 
-    } catch (error: any) {
+export const getAllStudentsController = asyncHandler(async (req: Request, res: Response) => {
+            try {
 
-        if (error.message === "Student not found") {
-            return res.status(404).json({ message: error.message });
-        }
+                const result = await getAllStudentsService(req.query);
 
-        return res.status(500).json({
-            message: "Something went wrong",
-            error: error.message
-        });
-    }
-};
+                return res.status(200).json(result);
 
-export const getAllStudentsController = async (req: Request, res: Response) => {
-    try {
+            } catch (error: any) {
+    if (error instanceof ApiError) throw error;
 
-        const result = await getAllStudentsService(req.query);
-
-        return res.status(200).json(result);
-
-    } catch (error: any) {
-
-        return res.status(500).json({
-            message: "Failed to fetch students",
-            error: error.message
-        });
-    }
-};
-
-export const getStudentReportController = async (
-    req: Request,
-    res: Response
-) => {
-    try {
-
-        const { username } = req.params;
-
-        const usernameStr = Array.isArray(username) ? username[0] : username;
-
-        const result = await getStudentReportService(usernameStr);
-
-        return res.status(200).json(result);
-
-    } catch (error: any) {
-
-        return res.status(500).json({
-            message: "Failed to fetch student report",
-            error: error.message
-        });
-    }
-};
-
-export const createStudentController = async (req: Request, res: Response) => {
-    try {
-        const student = await createStudentService(req.body);
-
-        return res.status(201).json({
-            message: "Student created successfully",
-            data: student
+                return res.status(500).json({
+                    message: "Failed to fetch students",
+                    error: error.message
+                });
+            }
         });
 
-    } catch (error: any) {
-        return res.status(400).json({
-            message: error.message
-        });
-    }
-};
+export const getStudentReportController = asyncHandler(async (
+            req: Request,
+            res: Response
+        ) => {
+            try {
 
+                const { username } = req.params;
 
-export const addStudentProgressController = async (
-    req: Request,
-    res: Response
-) => {
-    try {
+                const usernameStr = Array.isArray(username) ? username[0] : username;
 
-        const { student_id, question_id } = req.body;
+                const result = await getStudentReportService(usernameStr);
 
-        if (!student_id || !question_id) {
-            return res.status(400).json({
-                message: "student_id and question_id are required"
-            });
-        }
+                return res.status(200).json(result);
 
-        const progress = await addStudentProgressService(
-            Number(student_id),
-            Number(question_id)
-        );
+            } catch (error: any) {
+    if (error instanceof ApiError) throw error;
 
-        return res.status(201).json({
-            message: "Student progress added successfully",
-            data: progress
+                return res.status(500).json({
+                    message: "Failed to fetch student report",
+                    error: error.message
+                });
+            }
         });
 
-    } catch (error: any) {
+export const createStudentController = asyncHandler(async (req: Request, res: Response) => {
+            try {
+                const student = await createStudentService(req.body);
 
-        return res.status(400).json({
-            message: error.message
+                return res.status(201).json({
+                    message: "Student created successfully",
+                    data: student
+                });
+
+            } catch (error: any) {
+    if (error instanceof ApiError) throw error;
+                return res.status(400).json({
+                    message: error.message
+                });
+            }
         });
 
-    }
-};
+
+export const addStudentProgressController = asyncHandler(async (
+            req: Request,
+            res: Response
+        ) => {
+            try {
+
+                const { student_id, question_id } = req.body;
+
+                if (!student_id || !question_id) {
+                    return res.status(400).json({
+                        message: "student_id and question_id are required"
+                    });
+                }
+
+                const progress = await addStudentProgressService(
+                    Number(student_id),
+                    Number(question_id)
+                );
+
+                return res.status(201).json({
+                    message: "Student progress added successfully",
+                    data: progress
+                });
+
+            } catch (error: any) {
+    if (error instanceof ApiError) throw error;
+
+                return res.status(400).json({
+                    message: error.message
+                });
+
+            }
+        });
