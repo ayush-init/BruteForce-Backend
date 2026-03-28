@@ -6,17 +6,33 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getClassDetailsWithFullQuestionsService = exports.deleteClassService = exports.updateClassService = exports.getClassDetailsService = exports.createClassInTopicService = exports.getClassesByTopicService = void 0;
 const slugify_1 = __importDefault(require("slugify"));
 const prisma_1 = __importDefault(require("../config/prisma"));
-const getClassesByTopicService = async ({ batchId, topicSlug, }) => {
+const getClassesByTopicService = async ({ batchId, topicSlug, page = 1, limit = 20, search = '', }) => {
     if (!topicSlug) {
         throw new Error("Invalid topic slug");
     }
-    const classes = await prisma_1.default.class.findMany({
-        where: {
-            batch_id: batchId,
-            topic: {
-                slug: topicSlug,
-            },
+    // Build where clause
+    const whereClause = {
+        batch_id: batchId,
+        topic: {
+            slug: topicSlug,
         },
+    };
+    // Add search filter if provided
+    if (search) {
+        whereClause.class_name = {
+            contains: search,
+            mode: 'insensitive'
+        };
+    }
+    // Get total count for pagination
+    const total = await prisma_1.default.class.count({
+        where: whereClause,
+    });
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(total / limit);
+    const classes = await prisma_1.default.class.findMany({
+        where: whereClause,
         include: {
             topic: true, // so we can validate topic existence
             _count: {
@@ -28,9 +44,11 @@ const getClassesByTopicService = async ({ batchId, topicSlug, }) => {
         orderBy: {
             class_date: "asc",
         },
+        skip,
+        take: limit,
     });
     // If no classes found, we must check whether topic exists
-    if (classes.length === 0) {
+    if (classes.length === 0 && !search) {
         const topicExists = await prisma_1.default.topic.findUnique({
             where: { slug: topicSlug },
         });
@@ -49,7 +67,15 @@ const getClassesByTopicService = async ({ batchId, topicSlug, }) => {
         questionCount: cls._count.questionVisibility,
         created_at: cls.created_at,
     }));
-    return formatted;
+    return {
+        data: formatted,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+        },
+    };
 };
 exports.getClassesByTopicService = getClassesByTopicService;
 const createClassInTopicService = async ({ batchId, topicSlug, class_name, description, pdf_url, duration_minutes, class_date, }) => {
@@ -281,7 +307,7 @@ const deleteClassService = async ({ batchId, topicSlug, classSlug, }) => {
     return true;
 };
 exports.deleteClassService = deleteClassService;
-const getClassDetailsWithFullQuestionsService = async ({ studentId, batchId, topicSlug, classSlug, }) => {
+const getClassDetailsWithFullQuestionsService = async ({ studentId, batchId, topicSlug, classSlug, query, }) => {
     // Get class with topic and batch validation
     const classData = await prisma_1.default.class.findFirst({
         where: {
@@ -350,7 +376,30 @@ const getClassDetailsWithFullQuestionsService = async ({ studentId, batchId, top
                 : null
         };
     });
-    // Calculate progress stats
+    // Apply filtering
+    let filteredQuestions = questionsWithProgress;
+    const filter = query?.filter;
+    if (filter) {
+        switch (filter) {
+            case 'solved':
+                filteredQuestions = questionsWithProgress.filter(q => q.isSolved);
+                break;
+            case 'unsolved':
+                filteredQuestions = questionsWithProgress.filter(q => !q.isSolved);
+                break;
+            case 'all':
+            default:
+                filteredQuestions = questionsWithProgress;
+                break;
+        }
+    }
+    // Apply pagination
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedQuestions = filteredQuestions.slice(startIndex, endIndex);
+    // Calculate progress stats (based on all questions, not just filtered)
     const totalQuestions = questionsWithProgress.length;
     const solvedQuestions = questionsWithProgress.filter(q => q.isSolved).length;
     return {
@@ -365,7 +414,15 @@ const getClassDetailsWithFullQuestionsService = async ({ studentId, batchId, top
         topic: classData.topic,
         totalQuestions,
         solvedQuestions,
-        questions: questionsWithProgress
+        questions: paginatedQuestions,
+        pagination: {
+            total: filteredQuestions.length,
+            totalPages: Math.ceil(filteredQuestions.length / limit),
+            page,
+            limit,
+            hasNext: page < Math.ceil(filteredQuestions.length / limit),
+            hasPrev: page > 1
+        }
     };
 };
 exports.getClassDetailsWithFullQuestionsService = getClassDetailsWithFullQuestionsService;

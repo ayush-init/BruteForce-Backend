@@ -178,10 +178,6 @@ export const getLeaderboardWithPagination = async (filters: any, pagination: any
                     (l.medium_solved::numeric / NULLIF(b.medium_assigned,0) * 15)*100 +
                     (l.easy_solved::numeric / NULLIF(b.easy_assigned,0) * 10)*100, 2
                 ) AS score,
-                -- Completion percentages
-                ROUND((l.hard_solved::numeric / NULLIF(b.hard_assigned,0) * 100), 2) AS hard_completion,
-                ROUND((l.medium_solved::numeric / NULLIF(b.medium_assigned,0) * 100), 2) AS medium_completion,
-                ROUND((l.easy_solved::numeric / NULLIF(b.easy_assigned,0) * 100), 2) AS easy_completion,
                 -- All time-based rankings
                 l.weekly_global_rank,
                 l.weekly_city_rank,
@@ -215,9 +211,6 @@ export const getLeaderboardWithPagination = async (filters: any, pagination: any
             total_solved: Number(row.total_solved),
             current_streak: Number(row.current_streak),
             max_streak: Number(row.max_streak),
-            hard_completion: Number(row.hard_completion) || 0,
-            medium_completion: Number(row.medium_completion) || 0,
-            easy_completion: Number(row.easy_completion) || 0,
             score: Number(row.score) || 0,
             // All time-based rankings
             weekly_global_rank: Number(row.weekly_global_rank),
@@ -321,9 +314,6 @@ export const getStudentRankDirect = async (studentId: number, filters: any) => {
                        (l.medium_solved::numeric / NULLIF(b.medium_assigned,0)*100 * 15) +
                        (l.easy_solved::numeric / NULLIF(b.easy_assigned,0) * 10)*100, 2
                    ) AS score,
-                   ROUND((l.hard_solved::numeric / NULLIF(b.hard_assigned,0) * 100), 2) AS hard_completion,
-                   ROUND((l.medium_solved::numeric / NULLIF(b.medium_assigned,0) * 100), 2) AS medium_completion,
-                   ROUND((l.easy_solved::numeric / NULLIF(b.easy_assigned,0) * 100), 2) AS easy_completion
             FROM "Leaderboard" l
             JOIN "Student" s ON s.id = l.student_id
             JOIN "Batch" b ON b.id = s.batch_id

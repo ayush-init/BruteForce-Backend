@@ -463,7 +463,7 @@ const getTopicsWithBatchProgressService = async ({ studentId, batchId, }) => {
     return formattedTopics;
 };
 exports.getTopicsWithBatchProgressService = getTopicsWithBatchProgressService;
-const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, topicSlug, }) => {
+const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, topicSlug, query, }) => {
     // Get topic with batch-specific classes
     const topic = await prisma_1.default.topic.findFirst({
         where: { slug: topicSlug },
@@ -530,7 +530,13 @@ const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, t
             solvedQuestions
         };
     });
-    // Calculate overall topic progress
+    // Apply pagination for classes
+    const page = parseInt(query?.page) || 1;
+    const limit = parseInt(query?.limit) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedClasses = classesSummary.slice(startIndex, endIndex);
+    // Calculate overall topic progress (based on all classes, not just paginated)
     const totalTopicQuestions = classesSummary.reduce((sum, cls) => sum + cls.totalQuestions, 0);
     const totalSolvedQuestions = classesSummary.reduce((sum, cls) => sum + cls.solvedQuestions, 0);
     return {
@@ -539,7 +545,15 @@ const getTopicOverviewWithClassesSummaryService = async ({ studentId, batchId, t
         slug: topic.slug,
         description: topic.description || null,
         photo_url: topic.photo_url || null,
-        classes: classesSummary,
+        classes: paginatedClasses,
+        pagination: {
+            total: classesSummary.length,
+            totalPages: Math.ceil(classesSummary.length / limit),
+            page,
+            limit,
+            hasNext: page < Math.ceil(classesSummary.length / limit),
+            hasPrev: page > 1
+        },
         overallProgress: {
             totalClasses: classesSummary.length,
             totalQuestions: totalTopicQuestions,

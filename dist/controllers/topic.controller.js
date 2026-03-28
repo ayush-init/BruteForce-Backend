@@ -175,6 +175,7 @@ const getTopicOverviewWithClassesSummary = async (req, res) => {
             studentId,
             batchId,
             topicSlug: slug,
+            query: req.query,
         });
         return res.json(topicOverview);
     }

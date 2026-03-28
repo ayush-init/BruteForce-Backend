@@ -11,9 +11,17 @@ const getClassesByTopic = async (req, res) => {
                 error: "Invalid topic slug",
             });
         }
+        // Extract pagination and search parameters
+        const { page = '1', limit = '20', search = '' } = req.query;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const searchQuery = search;
         const classes = await (0, class_service_1.getClassesByTopicService)({
             batchId: batch.id,
-            topicSlug: topicSlugParam, // string
+            topicSlug: topicSlugParam,
+            page: pageNum,
+            limit: limitNum,
+            search: searchQuery,
         });
         return res.json(classes);
     }
@@ -169,6 +177,7 @@ const getClassDetailsWithFullQuestions = async (req, res) => {
             batchId,
             topicSlug: topic,
             classSlug: cls,
+            query: req.query,
         });
         return res.json(classDetails);
     }

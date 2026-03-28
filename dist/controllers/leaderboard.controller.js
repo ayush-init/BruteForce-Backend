@@ -70,23 +70,22 @@ const getAdminLeaderboard = async (req, res) => {
                 city_name: entry.city_name,
                 profile_image_url: entry.profile_image_url || null,
                 max_streak: entry.max_streak || 0,
-                easy_completion: Number(entry.easy_completion || 0),
-                medium_completion: Number(entry.medium_completion || 0),
-                hard_completion: Number(entry.hard_completion || 0),
                 total_solved: Number(entry.total_solved || 0),
                 score: Number(entry.score || 0),
                 global_rank: globalRank,
-                city_rank: cityRank,
-                last_calculated: entry.last_calculated
+                city_rank: cityRank
             };
         });
         return res.status(200).json({
             success: true,
-            page: result.pagination.page,
-            limit: result.pagination.limit,
-            total: result.pagination.total,
-            totalPages: result.pagination.totalPages,
-            leaderboard: formattedLeaderboard
+            data: {
+                leaderboard: formattedLeaderboard,
+                total: result.pagination.total,
+                page: result.pagination.page,
+                limit: result.pagination.limit,
+                available_cities: result.available_cities,
+                last_calculated: result.last_calculated
+            }
         });
     }
     catch (error) {
@@ -166,14 +165,10 @@ const getStudentLeaderboard = async (req, res) => {
                 batch_year: entry.batch_year,
                 city_name: entry.city_name,
                 max_streak: entry.max_streak || 0,
-                easy_completion: Number(entry.easy_completion || 0),
-                medium_completion: Number(entry.medium_completion || 0),
-                hard_completion: Number(entry.hard_completion || 0),
                 total_solved: Number(entry.total_solved || 0),
                 score: Number(entry.score || 0),
                 global_rank: globalRank,
-                city_rank: cityRank,
-                last_calculated: entry.last_calculated
+                city_rank: cityRank
             };
         });
         // Step 9 — Get logged-in student's rank using direct query
@@ -185,11 +180,6 @@ const getStudentLeaderboard = async (req, res) => {
             // The getStudentRankDirect already returns the correct rank fields based on type
             const globalRank = studentEntry.global_rank;
             const cityRank = studentEntry.city_rank;
-            // Handle potential null/undefined values in completion percentages
-            const easyCompletion = parseFloat(studentEntry.easy_completion) || 0;
-            const mediumCompletion = parseFloat(studentEntry.medium_completion) || 0;
-            const hardCompletion = parseFloat(studentEntry.hard_completion) || 0;
-            const totalCompletion = ((easyCompletion + mediumCompletion + hardCompletion) / 3).toFixed(2);
             yourRank = {
                 rank: filters.city === 'all' ? globalRank : cityRank,
                 student_id: studentId,
@@ -200,10 +190,11 @@ const getStudentLeaderboard = async (req, res) => {
                 city_name: studentEntry.city_name,
                 max_streak: studentEntry.max_streak,
                 score: studentEntry.score,
-                easy_solved: easyCompletion,
-                medium_solved: mediumCompletion,
-                hard_solved: hardCompletion,
-                total_solved: totalCompletion
+                easy_solved: 0,
+                medium_solved: 0,
+                hard_solved: 0,
+                total_solved: studentEntry.total_solved,
+                total_assigned: 0
             };
         }
         else {
@@ -217,13 +208,17 @@ const getStudentLeaderboard = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            top10: formattedTop10,
-            yourRank,
-            message: rankMessage,
-            filters: {
-                city: filters.city,
-                year: filters.year,
-                type: filters.type
+            data: {
+                top10: formattedTop10,
+                yourRank,
+                message: rankMessage,
+                filters: {
+                    city: filters.city,
+                    year: filters.year,
+                    type: filters.type
+                },
+                available_cities: top10Result.available_cities,
+                last_calculated: top10Result.last_calculated
             }
         });
     }
@@ -353,10 +348,7 @@ const getLeaderboardByType = async (req, res) => {
                 city_rank: studentEntry.alltime_city_rank,
                 score: studentEntry.score,
                 max_streak: studentEntry.max_streak,
-                total_solved: studentEntry.total_solved,
-                hard_completion: studentEntry.hard_completion,
-                medium_completion: studentEntry.medium_completion,
-                easy_completion: studentEntry.easy_completion
+                total_solved: studentEntry.total_solved
             },
             problem_solving_stats: {
                 total_questions_solved: totalSolved,

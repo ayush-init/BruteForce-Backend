@@ -34,12 +34,12 @@ const assignQuestionsToClassService = async ({ batchId, topicSlug, classSlug, qu
         data,
         skipDuplicates: true,
     });
-    // 🔄 Update batch question counts after assignment
+    // Update batch question counts after assignment
     await updateBatchQuestionCounts(batchId);
     return { assignedCount: questionIds.length };
 };
 exports.assignQuestionsToClassService = assignQuestionsToClassService;
-const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlug, }) => {
+const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlug, page = 1, limit = 25, search = '', }) => {
     // Find topic first
     const topic = await prisma_1.default.topic.findUnique({
         where: { slug: topicSlug },
@@ -57,10 +57,28 @@ const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlu
     if (!cls) {
         throw new Error("Class not found in this topic and batch");
     }
+    // Build where clause
+    const whereClause = {
+        class_id: cls.id,
+    };
+    // Add search filter if provided
+    if (search) {
+        whereClause.question = {
+            question_name: {
+                contains: search,
+                mode: 'insensitive'
+            }
+        };
+    }
+    // Get total count for pagination
+    const total = await prisma_1.default.questionVisibility.count({
+        where: whereClause,
+    });
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(total / limit);
     const assigned = await prisma_1.default.questionVisibility.findMany({
-        where: {
-            class_id: cls.id,
-        },
+        where: whereClause,
         include: {
             question: {
                 include: {
@@ -73,8 +91,19 @@ const getAssignedQuestionsOfClassService = async ({ batchId, topicSlug, classSlu
         orderBy: {
             assigned_at: "desc",
         },
+        skip,
+        take: limit,
     });
-    return assigned.map((qv) => qv.question);
+    const questions = assigned.map((qv) => qv.question);
+    return {
+        data: questions,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+        },
+    };
 };
 exports.getAssignedQuestionsOfClassService = getAssignedQuestionsOfClassService;
 const removeQuestionFromClassService = async ({ batchId, topicSlug, classSlug, questionId, }) => {
