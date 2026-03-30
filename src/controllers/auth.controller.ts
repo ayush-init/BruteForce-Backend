@@ -6,6 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { generateOTP, saveOTP, validateOTP } from '../utils/otp.util';
 import { sendOTPEmail } from '../utils/email.util';
 import { validateEmail } from '../utils/emailValidation.util';
+import { validatePasswordForAuth } from '../utils/passwordValidator.util';
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 
@@ -58,6 +59,9 @@ export const registerStudent = asyncHandler(async (req: Request, res: Response) 
   if (!batch) {
     throw new ApiError(400, 'Invalid batch_id', [], "BATCH_NOT_FOUND");
   }
+
+  // Validate password strength
+  validatePasswordForAuth(password);
 
   // Hash password
   const password_hash = await hashPassword(password);
@@ -230,6 +234,10 @@ export const registerAdmin = asyncHandler(async (req: Request, res: Response) =>
   if (role !== "TEACHER" && role !== "INTERN" && role !== "SUPERADMIN") {
     throw new ApiError(400, "Invalid role type");
   }
+
+  // Validate password strength
+  validatePasswordForAuth(password);
+
   const password_hash = await hashPassword(password);
 
   const admin = await prisma.admin.create({
@@ -619,6 +627,35 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
   });
 });
 
+// Verify OTP - Only validate OTP, don't reset password
+export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    throw new ApiError(400, 'Email and OTP are required');
+  }
+
+  // Validate email domain
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.isValid) {
+    throw new ApiError(400, emailValidation.error);
+  }
+
+  // Verify OTP
+  console.log(`Attempting to validate OTP: ${otp} for email: ${email}`);
+  const isValidOTP = await validateOTP(email, otp);
+  console.log(`OTP validation result: ${isValidOTP}`);
+
+  if (!isValidOTP) {
+    throw new ApiError(400, 'Invalid or expired OTP');
+  }
+
+  res.json({
+    message: 'OTP verified successfully',
+    valid: true
+  });
+});
+
 // Reset Password - Verify OTP and reset password
 export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
   const { email, otp, newPassword } = req.body;
@@ -634,9 +671,7 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
   }
 
   // Validate password strength
-  if (newPassword.length < 6) {
-    throw new ApiError(400, 'Password must be at least 6 characters long');
-  }
+  validatePasswordForAuth(newPassword);
 
   // Verify OTP
   console.log(`Attempting to validate OTP: ${otp} for email: ${email}`);

@@ -1,5 +1,6 @@
 import prisma from "../config/prisma";
 import { hashPassword } from "../utils/hashPassword";
+import { validatePasswordForAuth } from "../utils/passwordValidator.util";
 import { AdminRole } from "@prisma/client";
 import { ApiError } from "../utils/ApiError";
 
@@ -91,6 +92,9 @@ export const createAdminService = async (adminData: any) => {
                 adminData.city_id = batch.city_id;
             }
         }
+
+        // Validate password strength
+        validatePasswordForAuth(adminData.password);
 
         // Hash password
         const hashedPassword = await hashPassword(adminData.password);
@@ -250,6 +254,8 @@ export const updateAdminService = async (id: number, updateData: any) => {
 
         // Hash password if provided
         if (updateData.password) {
+            // Validate password strength
+            validatePasswordForAuth(updateData.password);
             updateData.password_hash = await hashPassword(updateData.password);
             delete updateData.password; // Remove plain password
         }

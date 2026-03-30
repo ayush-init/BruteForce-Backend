@@ -19,112 +19,118 @@ export const sendOTPEmail = async (email: string, otp: string, userName?: string
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: '🚀 DSA Tracker - Secure Password Reset',
+      subject: 'BruteForce - Secure Password Reset',
       html: `
-        <!DOCTYPE html>
-        <html style="margin: 0; padding: 0; background-color: #f8fafc;">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>DSA Tracker - Password Reset</title>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-          
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 0; text-align: center;">
-            <div style="max-width: 600px; margin: 0 auto;">
-              <h1 style="color: white; font-size: 32px; margin: 0; font-weight: 700;">
-                🚀 DSA Tracker
-              </h1>
-              <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; margin: 8px 0 0 0;">
-                Secure Password Reset
-              </p>
-            </div>
-          </div>
+      <!DOCTYPE html>
+<html>
 
-          <!-- Main Content -->
-          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-            
-            <!-- Card Container -->
-            <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-              
-              <!-- Greeting -->
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: #1e293b; font-size: 24px; margin: 0;">
-                  Hi ${userName || 'there'} 👋
-                </h2>
-              </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BruteForce | Secure Access</title>
+</head>
 
-              <!-- Message -->
-              <div style="text-align: center; margin-bottom: 40px;">
-                <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin: 0;">
-                  We received a request to reset your password. 
-                  <br />
-                  Use the verification code below to continue:
-                </p>
-              </div>
+<body
+    style="margin:0; padding:0; background-color:#050505; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-              <!-- OTP Section -->
-              <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 30px;">
-                <p style="color: #64748b; font-size: 14px; margin: 0 0 15px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-                  Verification Code
-                </p>
-                <div style="font-size: 36px; font-weight: 700; color: #667eea; letter-spacing: 8px; line-height: 1; font-family: 'Courier New', monospace;">
-                  ${otp}
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#050505;">
+        <tr>
+            <td align="center" style="padding: 40px 10px;">
+
+                <div
+                    style="max-width: 440px; background: linear-gradient(145deg, #111111 0%, #0a0a0a 100%); border: 1px solid #222; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+
+
+                    <div style="padding: 40px 30px;">
+
+                        <div style="text-align:center; margin-bottom:28px;">
+
+                            <div style="
+    display:inline-block;
+    padding:12px 22px;
+    border-radius:14px;
+
+    background:linear-gradient(135deg, rgba(204,255,0,0.08), rgba(204,255,0,0.02));
+    border:1px solid rgba(204,255,0,0.15);
+
+  ">
+
+                                <span style="
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      font-size:24px;
+      font-weight:900;
+      letter-spacing:-0.5px;
+
+      color:#ccff00;
+      text-transform:uppercase;
+    ">
+                                    Brute<span style="color:#ffffff;">Force</span>
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div style="text-align: center;">
+                            <h2 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 0 0 10px 0;">Verify
+                                your identity</h2>
+                            <p style="color: #999; font-size: 15px; line-height: 1.5; margin: 0 0 30px 0;">
+                                Hey <span style="color: #ccff00; font-weight: 600;">${userName || "User"}</span>, use
+                                the code below to complete your password reset.
+                            </p>
+                        </div>
+
+                        <div
+                            style="background: #1a1a1a; border-radius: 16px; padding: 30px; margin-bottom: 30px; border: 1px dashed #333; text-align: center;">
+                            <span
+                                style="display: block; color: #666; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px;">Your
+                                One-Time Code</span>
+                            <div
+                                style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 800; color: #ffffff; letter-spacing: 12px; margin-left: 12px;">
+                                ${otp}
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <p style="color: #555; font-size: 12px; margin: 0;">
+                                This code expires in <span style="color: #888; font-weight: 600;">10 minutes</span>.
+                            </p>
+                        </div>
+
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                            style="background: rgba(255, 50, 50, 0.05); border-radius: 12px;">
+                            <tr>
+                                <td style="padding: 15px; text-align: center;">
+                                    <p style="color: #ff5f5f; font-size: 12px; margin: 0; font-weight: 500;">
+                                        ⚠️ Never share this code with anyone, including BruteForce staff.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </div>
+
+                    <div style="padding: 0 30px 40px 30px; text-align: center;">
+                        <p style="color: #444; font-size: 12px; margin-bottom: 20px;">
+                            If you didn't request this, you can safely ignore this email.
+                        </p>
+                        <div style="height: 1px; background: #222; margin-bottom: 20px;"></div>
+                        <p style="color: #444; font-size: 11px; margin: 0;">
+                            &copy; 2026 BruteForce Security Systems Inc.<br>
+                            123 Cyber Suite, Digital Way.
+                        </p>
+                    </div>
+
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; margin: 15px 0 0 0;">
-                  This code expires in 10 minutes
-                </p>
-              </div>
 
-              <!-- Warning Section -->
-              <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px 20px; margin-bottom: 30px;">
-                <p style="color: #991b1b; font-size: 14px; margin: 0; line-height: 1.5;">
-                  <strong>🔒 Security Notice:</strong> Do not share this OTP with anyone. 
-                  Our team will never ask for your verification code.
-                </p>
-              </div>
+            </td>
+        </tr>
+    </table>
 
-              <!-- Action Button -->
-              <div style="text-align: center;">
-                <a href="#" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                  Return to DSA Tracker
-                </a>
-              </div>
+</body>
 
-            </div>
-
-            <!-- Help Section -->
-            <div style="text-align: center; margin-top: 30px; padding: 20px;">
-              <p style="color: #64748b; font-size: 14px; margin: 0 0 15px 0;">
-                Didn't request this password reset?
-              </p>
-              <div style="background: #f8fafc; border-radius: 8px; padding: 15px; display: inline-block;">
-                <p style="color: #475569; font-size: 13px; margin: 0;">
-                  Contact our support team at:
-                  <br />
-                  <a href="mailto:support@dsatracker.com" style="color: #667eea; text-decoration: none; font-weight: 600;">
-                    support@dsatracker.com
-                  </a>
-                </p>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-              <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-                © 2024 DSA Tracker. All rights reserved.
-              </p>
-              <p style="color: #94a3b8; font-size: 12px; margin: 8px 0 0 0;">
-                This is an automated message. Please do not reply to this email.
-              </p>
-            </div>
-
-          </div>
-
-        </body>
-        </html>
-      `
+</html>
+`
     };
 
     await transporter.sendMail(mailOptions);

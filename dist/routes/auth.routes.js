@@ -16,6 +16,7 @@ router.post('/admin/logout', auth_controller_1.logoutAdmin);
 router.post('/refresh-token', auth_controller_1.refreshToken);
 // ===== PASSWORD RESET (Public) =====
 router.post('/forgot-password', rateLimit_util_1.passwordResetLimiter, auth_controller_1.forgotPassword);
+router.post('/verify-otp', rateLimit_util_1.otpLimiter, auth_controller_1.verifyOtp);
 router.post('/reset-password', rateLimit_util_1.otpLimiter, auth_controller_1.resetPassword);
 // ===== GOOGLE OAUTH (Public) =====
 router.post('/google-login', auth_controller_1.googleLogin);

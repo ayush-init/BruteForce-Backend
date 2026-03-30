@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteAdminService = exports.updateAdminService = exports.getAllAdminsService = exports.createAdminService = exports.getCityWiseStats = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
 const hashPassword_1 = require("../utils/hashPassword");
+const passwordValidator_util_1 = require("../utils/passwordValidator.util");
 const ApiError_1 = require("../utils/ApiError");
 const getCityWiseStats = async () => {
     try {
@@ -87,6 +88,8 @@ const createAdminService = async (adminData) => {
                 adminData.city_id = batch.city_id;
             }
         }
+        // Validate password strength
+        (0, passwordValidator_util_1.validatePasswordForAuth)(adminData.password);
         // Hash password
         const hashedPassword = await (0, hashPassword_1.hashPassword)(adminData.password);
         // Create admin
@@ -232,6 +235,8 @@ const updateAdminService = async (id, updateData) => {
         }
         // Hash password if provided
         if (updateData.password) {
+            // Validate password strength
+            (0, passwordValidator_util_1.validatePasswordForAuth)(updateData.password);
             updateData.password_hash = await (0, hashPassword_1.hashPassword)(updateData.password);
             delete updateData.password; // Remove plain password
         }

@@ -9,6 +9,7 @@ import {
   googleLogin,
   forgotPassword,
   resetPassword,
+  verifyOtp,
 } from '../controllers/auth.controller';
 import { passwordResetLimiter, otpLimiter } from '../utils/rateLimit.util';
 
@@ -29,6 +30,7 @@ router.post('/refresh-token',   refreshToken);
 
 // ===== PASSWORD RESET (Public) =====
 router.post('/forgot-password', passwordResetLimiter, forgotPassword);
+router.post('/verify-otp', otpLimiter, verifyOtp);
 router.post('/reset-password', otpLimiter, resetPassword);
 
 // ===== GOOGLE OAUTH (Public) =====
