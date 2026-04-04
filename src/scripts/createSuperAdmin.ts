@@ -19,10 +19,10 @@ async function main() {
 
   // Create new superadmin
   const superadmin = await prisma.admin.upsert({
-    where: { email: "superadmin@test.com" },
+    where: { email: "satya@example.com" },
     create: {
       name: "Dhruv",
-      email: "superadmin@test.com",
+      email: "satya@example.com",
       password_hash,
       role: "SUPERADMIN",
     },
