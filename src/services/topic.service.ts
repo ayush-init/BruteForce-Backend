@@ -166,9 +166,17 @@ export const getTopicsForBatchService = async ({ batchId, query }: GetTopicsForB
     topicStats.set(cls.topic_id, currentStats);
   });
 
-  // Step 4: Transform all topics with stats
+  // Step 4: Transform all topics with stats and find latest class date
   const topics = allTopics.map(topic => {
     const stats = topicStats.get(topic.id) || { classCount: 0, questionCount: 0 };
+    
+    // Find latest class for this topic
+    const topicClasses = batchClasses.filter(cls => cls.topic_id === topic.id);
+    const lastClass = topicClasses.length > 0
+      ? topicClasses.reduce((latest: any, cls: any) => 
+          !latest || new Date(cls.created_at) > new Date(latest.created_at) ? cls : latest
+        , null)
+      : null;
 
     return {
       id: topic.id.toString(),
@@ -179,7 +187,7 @@ export const getTopicsForBatchService = async ({ batchId, query }: GetTopicsForB
       updated_at: topic.updated_at,
       classCount: stats.classCount,        // 0 for new batches
       questionCount: stats.questionCount,  // 0 for new batches
-      firstClassCreated_at: null
+      lastClassCreated_at: lastClass?.created_at || null
     };
   });
 
@@ -195,7 +203,7 @@ export const getTopicsForBatchService = async ({ batchId, query }: GetTopicsForB
       photo_url: topic.photo_url,
       classCount: 0,
       questionCount: 0,
-      firstClassCreated_at: null
+      lastClassCreated_at: null
     });
   });
 
@@ -205,11 +213,9 @@ export const getTopicsForBatchService = async ({ batchId, query }: GetTopicsForB
     if (topic) {
       topic.classCount = (topic.classCount || 0) + 1;
       topic.questionCount = (topic.questionCount || 0) + cls.questionVisibility.length;
-      topic.firstClassCreated_at = cls.created_at;
+      topic.lastClassCreated_at = cls.created_at;
     }
   });
-
-
 
   // Apply search filter if provided
   let filteredTopics = topics;
@@ -224,14 +230,21 @@ export const getTopicsForBatchService = async ({ batchId, query }: GetTopicsForB
   filteredTopics.sort((a, b) => {
     switch (sortBy) {
       case 'oldest':
-        return new Date(a.firstClassCreated_at || 0).getTime() - new Date(b.firstClassCreated_at || 0).getTime();
+        // Topics without classes should go to the end for "oldest"
+        if (!a.lastClassCreated_at && !b.lastClassCreated_at) return 0;
+        if (!a.lastClassCreated_at) return 1;
+        if (!b.lastClassCreated_at) return -1;
+        return new Date(a.lastClassCreated_at).getTime() - new Date(b.lastClassCreated_at).getTime();
       case 'classes':
         return (b.classCount || 0) - (a.classCount || 0);
       case 'questions':
         return (b.questionCount || 0) - (a.questionCount || 0);
       case 'recent':
       default:
-        return new Date(b.firstClassCreated_at || 0).getTime() - new Date(a.firstClassCreated_at || 0).getTime();
+        if (!a.lastClassCreated_at && !b.lastClassCreated_at) return 0;
+        if (!a.lastClassCreated_at) return 1;
+        if (!b.lastClassCreated_at) return -1;
+        return new Date(b.lastClassCreated_at).getTime() - new Date(a.lastClassCreated_at).getTime();
     }
   });
 
@@ -426,68 +439,38 @@ export const getTopicsWithBatchProgressService = async ({
 }: GetTopicsWithBatchProgressInput) => {
   const page = parseInt(query?.page as string) || 1;
   const limit = parseInt(query?.limit as string) || 10;
-  const skip = (page - 1) * limit;
   const search = query?.search as string;
 
-  // Build where condition for search
-  const whereCondition: any = {};
-  if (search) {
-    whereCondition.OR = [
-      { topic_name: { contains: search, mode: 'insensitive' } },
-      { slug: { contains: search, mode: 'insensitive' } }
-    ];
-  }
-
-  // Get total count for pagination
-  const totalCount = await prisma.topic.count({
-    where: whereCondition
+  // Step 1: Get ALL topics (same as admin method)
+  const allTopics = await prisma.topic.findMany({
+    orderBy: { created_at: "desc" }
   });
 
-  // Get paginated topics with optimized includes
-  const topics = await prisma.topic.findMany({
-    where: whereCondition,
-    select: {
-      id: true,
-      topic_name: true,
-      slug: true,
-      photo_url: true,
-      classes: {
-        where: {
-          batch_id: batchId
-        },
-        select: {
-          created_at: true,
-          questionVisibility: {
+  // Step 2: Get all classes for THIS batch (same as admin method)
+  const batchClasses = await prisma.class.findMany({
+    where: { batch_id: batchId },
+    include: {
+      questionVisibility: {
+        include: {
+          question: {
             select: {
-              question_id: true,
-              question: {
-                select: {
-                  id: true,
-                  topic_id: true
-                }
-              }
+              id: true,
+              topic_id: true
             }
           }
-        },
-        orderBy: { created_at: 'asc' }
+        }
       }
-    },
-    orderBy: { created_at: 'desc' },
-    skip,
-    take: limit
+    }
   });
 
-  // Collect all question IDs from the paginated topics only
+  // Step 3: Get student progress for all questions in this batch
   const assignedQuestionIds = new Set<number>();
-  topics.forEach((topic: any) => {
-    topic.classes.forEach((cls: any) => {
-      cls.questionVisibility.forEach((qv: any) => {
-        assignedQuestionIds.add(qv.question.id);
-      });
+  batchClasses.forEach(cls => {
+    cls.questionVisibility.forEach(qv => {
+      assignedQuestionIds.add(qv.question.id);
     });
   });
 
-  // Get student progress only for the questions we need
   const studentProgress = await prisma.studentProgress.findMany({
     where: {
       student_id: studentId,
@@ -512,67 +495,95 @@ export const getTopicsWithBatchProgressService = async ({
     solvedByTopic.get(topicId)!.add(progress.question_id);
   });
 
-  // Format response with optimized processing
-  const formattedTopics = topics.map((topic: any) => {
-    // Count unique questions assigned to this batch for this topic
-    const assignedQuestions = new Set<number>();
+  // Step 4: Create map of topic -> classes/questions for THIS batch (same as admin method)
+  const topicStats = new Map();
 
-    topic.classes.forEach((cls: any) => {
-      cls.questionVisibility.forEach((qv: any) => {
-        // Only count questions that belong to this topic
-        if (qv.question.topic_id === topic.id) {
-          assignedQuestions.add(qv.question.id);
-        }
-      });
-    });
+  batchClasses.forEach(cls => {
+    const currentStats = topicStats.get(cls.topic_id) || { classCount: 0, questionCount: 0 };
+    currentStats.classCount += 1;
+    currentStats.questionCount += cls.questionVisibility.length;
+    topicStats.set(cls.topic_id, currentStats);
+  });
+
+  // Step 5: Transform all topics with stats and find latest class date (same as admin method)
+  const topicsWithPercentage = allTopics.map(topic => {
+    const stats = topicStats.get(topic.id) || { classCount: 0, questionCount: 0 };
+    
+    // Find latest class for this topic (same as admin method)
+    const topicClasses = batchClasses.filter(cls => cls.topic_id === topic.id);
+    const lastClass = topicClasses.length > 0
+      ? topicClasses.reduce((latest: any, cls: any) => 
+          !latest || new Date(cls.created_at) > new Date(latest.created_at) ? cls : latest
+        , null)
+      : null;
 
     // Get solved questions for this topic
     const solvedQuestions = solvedByTopic.get(topic.id) || new Set();
-
-    // Find earliest class creation date, or null if no classes
-    const firstClass = topic.classes.length > 0
-      ? topic.classes.reduce((earliest: any, cls: any) => {
-        return !earliest || cls.created_at < earliest.created_at ? cls : earliest;
-      }, null)
-      : null;
+    const totalQuestions = stats.questionCount;
+    const progressPercentage = totalQuestions > 0 ? Math.round((solvedQuestions.size / totalQuestions) * 100) : 0;
 
     return {
-      id: topic.id,
+      id: topic.id.toString(),
       topic_name: topic.topic_name,
       slug: topic.slug,
       photo_url: topic.photo_url,
-      firstClassCreatedAt: firstClass?.created_at || null,
+      created_at: topic.created_at,
+      updated_at: topic.updated_at,
+      classCount: stats.classCount,        // 0 for new batches
+      questionCount: stats.questionCount,  // 0 for new batches
+      lastClassCreated_at: lastClass?.created_at || null,
       batchSpecificData: {
-        totalClasses: topic.classes.length,
-        totalQuestions: assignedQuestions.size,
+        totalClasses: stats.classCount,
+        totalQuestions: stats.questionCount,
         solvedQuestions: solvedQuestions.size
-      }
+      },
+      progressPercentage
     };
   });
 
-  // Sort by firstClassCreatedAt (newest first), topics without classes go to end
-  formattedTopics.sort((a: any, b: any) => {
-    // Both have classes - sort by date (newest first)
-    if (a.firstClassCreatedAt && b.firstClassCreatedAt) {
-      return new Date(b.firstClassCreatedAt).getTime() - new Date(a.firstClassCreatedAt).getTime();
+  // Apply search filter if provided (same as admin method)
+  let filteredTopics = topicsWithPercentage;
+  if (search) {
+    filteredTopics = topicsWithPercentage.filter(topic =>
+      topic.topic_name.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  // Apply sorting (same as admin method)
+  const sortBy = query?.sortBy || 'recent';
+  filteredTopics.sort((a, b) => {
+    switch (sortBy) {
+      case 'oldest':
+        // Topics without classes should go to the end for "oldest"
+        if (!a.lastClassCreated_at && !b.lastClassCreated_at) return 0;
+        if (!a.lastClassCreated_at) return 1;
+        if (!b.lastClassCreated_at) return -1;
+        return new Date(a.lastClassCreated_at).getTime() - new Date(b.lastClassCreated_at).getTime();
+      case 'strongest':
+        // Sort by highest progress percentage first
+        return (b.progressPercentage || 0) - (a.progressPercentage || 0);
+      case 'weakest':
+        // Sort by lowest progress percentage first
+        return (a.progressPercentage || 0) - (b.progressPercentage || 0);
+      case 'recent':
+      default:
+        if (!a.lastClassCreated_at && !b.lastClassCreated_at) return 0;
+        if (!a.lastClassCreated_at) return 1;
+        if (!b.lastClassCreated_at) return -1;
+        return new Date(b.lastClassCreated_at).getTime() - new Date(a.lastClassCreated_at).getTime();
     }
-    // Only A has classes - A comes first
-    if (a.firstClassCreatedAt && !b.firstClassCreatedAt) {
-      return -1;
-    }
-    // Only B has classes - B comes first  
-    if (!a.firstClassCreatedAt && b.firstClassCreatedAt) {
-      return 1;
-    }
-    // Neither has classes - keep original order
-    return 0;
   });
 
+  // Apply pagination (same as admin method)
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedTopics = filteredTopics.slice(startIndex, endIndex);
+
   return {
-    topics: formattedTopics,
+    topics: paginatedTopics,
     pagination: {
-      total: totalCount,
-      totalPages: Math.ceil(totalCount / limit),
+      total: filteredTopics.length,
+      totalPages: Math.ceil(filteredTopics.length / limit),
       page,
       limit
     }
@@ -790,14 +801,14 @@ export const getTopicProgressByUsernameService = async (username: string) => {
   };
 };
 
-export const getPaginatedTopicsService = async ({ 
-  page = 1, 
-  limit = 6, 
-  search = '' 
-}: { 
-  page?: number; 
-  limit?: number; 
-  search?: string; 
+export const getPaginatedTopicsService = async ({
+  page = 1,
+  limit = 6,
+  search = ''
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
 }) => {
   const skip = (page - 1) * limit;
 
