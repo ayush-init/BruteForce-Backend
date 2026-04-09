@@ -6,12 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.startSyncJob = startSyncJob;
 const node_cron_1 = __importDefault(require("node-cron"));
 const sync_worker_1 = require("../workers/sync.worker");
-const leaderboardSync_service_1 = require("../services/leaderboardSync.service");
+const sync_core_service_1 = require("../services/leaderboardSync/sync-core.service");
 function startSyncJob() {
     console.log("Sync cron job started");
     //  Combined sync job: Student Progress FIRST, then Leaderboard
-    // cron.schedule("0 */4 * * *", async () => {
-    // cron.schedule("* * * * *", async () => {
     node_cron_1.default.schedule("0 9,18,23 * * *", async () => {
         // Runs: 9:00 AM, 18:00 (6 PM), 23:00 (11 PM)
         const maxRetries = 3;
@@ -28,16 +26,12 @@ function startSyncJob() {
                 // Step 2: Update leaderboard after student progress is complete
                 console.log(" Step 2: Updating leaderboard cache...");
                 const leaderboardSyncStart = Date.now();
-                const leaderboardResult = await (0, leaderboardSync_service_1.syncLeaderboardData)();
+                const leaderboardResult = await (0, sync_core_service_1.syncLeaderboardData)();
                 const leaderboardSyncDuration = Date.now() - leaderboardSyncStart;
                 console.log(`❤️❤️❤️❤️❤️❤️❤️ Leaderboard sync completed in ${leaderboardSyncDuration}ms`);
                 const totalDuration = Date.now() - studentSyncStart;
                 console.log(`❤️❤️❤️❤️❤️❤️❤️ Combined sync cycle completed successfully in ${totalDuration}ms`);
                 console.log(`❤️❤️❤️❤️❤️❤️❤️ Processed ${leaderboardResult.studentsProcessed} students`);
-                // Stop server after sync completion
-                // console.log("Stopping server...");
-                // process.exit(0);
-                // Success, exit retry loop
                 break;
             }
             catch (error) {
@@ -45,7 +39,14 @@ function startSyncJob() {
                 console.error(`Sync attempt ${attempt} failed:`, error);
                 if (attempt >= maxRetries) {
                     console.error("All sync attempts failed. Please investigate the issue.");
-                    // TODO: Add alert/notification system here
+                    // Alert/notification system for sync failures
+                    // Log critical failure for monitoring system
+                    console.error(`CRITICAL: Student sync failed after ${maxRetries} attempts`);
+                    // In production, this would trigger:
+                    // - Email/SMS alerts to administrators
+                    // - Monitoring system alerts
+                    // - Incident response team notification
+                    // For now, we log the critical error for monitoring
                     break;
                 }
                 // Exponential backoff: 2s, 4s, 8s

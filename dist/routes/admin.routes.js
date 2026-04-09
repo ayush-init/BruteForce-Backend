@@ -5,11 +5,12 @@ const auth_middleware_1 = require("../middlewares/auth.middleware");
 const role_middleware_1 = require("../middlewares/role.middleware");
 const admin_middleware_1 = require("../middlewares/admin.middleware");
 const batch_middleware_1 = require("../middlewares/batch.middleware");
+const rateLimiter_1 = require("../middlewares/rateLimiter");
+const validation_middleware_1 = require("../middlewares/validation.middleware");
 const city_controller_1 = require("../controllers/city.controller");
 const batch_controller_1 = require("../controllers/batch.controller");
 const topic_controller_1 = require("../controllers/topic.controller");
 const question_controller_1 = require("../controllers/question.controller");
-const questionBulk_controller_1 = require("../controllers/questionBulk.controller");
 const imageUpload_middleware_1 = require("../middlewares/imageUpload.middleware");
 const upload_middleware_1 = require("../middlewares/upload.middleware");
 const pdfUpload_middleware_1 = require("../middlewares/pdfUpload.middleware");
@@ -21,6 +22,10 @@ const class_controller_1 = require("../controllers/class.controller");
 const progress_controller_1 = require("../controllers/progress.controller");
 const student_controller_1 = require("../controllers/student.controller");
 const bulk_controller_1 = require("../controllers/bulk.controller");
+const topic_validation_1 = require("../validations/topic.validation");
+const question_validation_1 = require("../validations/question.validation");
+const student_validation_1 = require("../validations/student.validation");
+const leaderboard_validation_1 = require("../validations/leaderboard.validation");
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.verifyToken);
 router.use(role_middleware_1.isAdmin);
@@ -33,21 +38,21 @@ router.get("/cities", city_controller_1.getAllCities);
 router.get("/batches", batch_controller_1.getAllBatches);
 // Global Topics
 router.get("/topics", topic_controller_1.getAllTopics);
-router.post("/topics", role_middleware_1.isTeacherOrAbove, imageUpload_middleware_1.uploadImage.single('photo'), topic_controller_1.createTopic);
-router.put("/topics/:topicSlug", role_middleware_1.isTeacherOrAbove, imageUpload_middleware_1.uploadImage.single('photo'), topic_controller_1.updateTopic);
-router.patch("/topics/:topicSlug", role_middleware_1.isTeacherOrAbove, imageUpload_middleware_1.uploadImage.single('photo'), topic_controller_1.updateTopic);
-router.delete("/topics/:topicSlug", role_middleware_1.isTeacherOrAbove, topic_controller_1.deleteTopic);
+router.post("/topics", role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateBody)(topic_validation_1.createTopicSchema), imageUpload_middleware_1.uploadImage.single('photo'), topic_controller_1.createTopic);
+router.put("/topics/:topicSlug", role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateParams)(topic_validation_1.topicSlugParamsSchema), (0, validation_middleware_1.validateBody)(topic_validation_1.updateTopicSchema), imageUpload_middleware_1.uploadImage.single('photo'), topic_controller_1.updateTopic);
+router.patch("/topics/:topicSlug", role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateParams)(topic_validation_1.topicSlugParamsSchema), (0, validation_middleware_1.validateBody)(topic_validation_1.updateTopicSchema), imageUpload_middleware_1.uploadImage.single('photo'), topic_controller_1.updateTopic);
+router.delete("/topics/:topicSlug", role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateParams)(topic_validation_1.topicSlugParamsSchema), topic_controller_1.deleteTopic);
 // Bulk Operation for Topics
 router.post("/topics/bulk-upload", role_middleware_1.isTeacherOrAbove, topic_controller_1.createTopicsBulk);
 // Bulk Test Upload Questions contain topic slug
 router.post("/bulkTestUpload", role_middleware_1.isTeacherOrAbove, upload_middleware_1.upload.single("file"), topic_controller_1.bulkTestUploadQuestions);
 // questions gloabal 
-router.post("/questions", role_middleware_1.isTeacherOrAbove, question_controller_1.createQuestion);
+router.post("/questions", role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateBody)(question_validation_1.createQuestionSchema), question_controller_1.createQuestion);
 router.get("/questions", question_controller_1.getAllQuestions);
-router.patch("/questions/:id", role_middleware_1.isTeacherOrAbove, question_controller_1.updateQuestion);
-router.delete("/questions/:id", role_middleware_1.isTeacherOrAbove, question_controller_1.deleteQuestion);
+router.patch("/questions/:id", role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateParams)(question_validation_1.questionIdParamsSchema), (0, validation_middleware_1.validateBody)(question_validation_1.updateQuestionSchema), question_controller_1.updateQuestion);
+router.delete("/questions/:id", role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateParams)(question_validation_1.questionIdParamsSchema), question_controller_1.deleteQuestion);
 // Bulk Operation for Question 
-router.post("/questions/bulk-upload", role_middleware_1.isAdmin, role_middleware_1.isTeacherOrAbove, upload_middleware_1.upload.single("file"), questionBulk_controller_1.bulkUploadQuestions);
+router.post("/questions/bulk-upload", role_middleware_1.isAdmin, role_middleware_1.isTeacherOrAbove, upload_middleware_1.upload.single("file"), question_controller_1.bulkUploadQuestions);
 // Download Batch Report
 router.post("/student/reportdownload", csv_controller_1.downloadBatchReportController);
 // Bulk Operation for Student 
@@ -56,15 +61,15 @@ router.post("/bulk-operations", upload_middleware_1.upload.single("file"), bulk_
 router.post("/stats", admin_controller_1.getAdminStats);
 // Roles
 router.get("/roles", admin_controller_1.getRolesController);
-router.post("/leaderboard", leaderboard_controller_1.getAdminLeaderboard); // Single admin leaderboard with pagination and search
-router.patch("/students/:id", role_middleware_1.isTeacherOrAbove, role_middleware_1.isAdmin, student_controller_1.updateStudentDetails);
+router.post("/leaderboard", rateLimiter_1.heavyLimiter, (0, validation_middleware_1.validateBody)(leaderboard_validation_1.adminLeaderboardSchema), leaderboard_controller_1.getAdminLeaderboard); // Single admin leaderboard with pagination and search
+router.patch("/students/:id", role_middleware_1.isTeacherOrAbove, role_middleware_1.isAdmin, (0, validation_middleware_1.validateParams)(student_validation_1.studentIdParamsSchema), (0, validation_middleware_1.validateBody)(student_validation_1.updateStudentProfileSchema), student_controller_1.updateStudentDetails);
 // Delete (Hard Delete)
-router.delete("/students/:id", role_middleware_1.isTeacherOrAbove, role_middleware_1.isAdmin, student_controller_1.deleteStudentDetails);
-router.get("/students", student_controller_1.getAllStudentsController);
+router.delete("/students/:id", role_middleware_1.isTeacherOrAbove, role_middleware_1.isAdmin, (0, validation_middleware_1.validateParams)(student_validation_1.studentIdParamsSchema), student_controller_1.deleteStudentDetails);
+router.get("/students", (0, validation_middleware_1.validateQuery)(student_validation_1.studentQuerySchema), student_controller_1.getAllStudentsController);
 // router.get("/students/:username", getStudentReportController);
-router.post("/students", role_middleware_1.isAdmin, role_middleware_1.isTeacherOrAbove, student_controller_1.createStudentController);
-router.post("/students/progress", role_middleware_1.isTeacherOrAbove, role_middleware_1.isAdmin, student_controller_1.addStudentProgressController);
-router.post("/students/sync/:id", progress_controller_1.manualSync);
+router.post("/students", role_middleware_1.isAdmin, role_middleware_1.isTeacherOrAbove, (0, validation_middleware_1.validateBody)(student_validation_1.createStudentSchema), student_controller_1.createStudentController);
+router.post("/students/progress", role_middleware_1.isTeacherOrAbove, role_middleware_1.isAdmin, (0, validation_middleware_1.validateBody)(student_validation_1.addStudentProgressSchema), student_controller_1.addStudentProgressController);
+router.post("/students/sync/:id", (0, validation_middleware_1.validateParams)(student_validation_1.studentIdParamsSchema), progress_controller_1.manualSync);
 // Everything below requires valid batchSlug
 router.use("/:batchSlug", batch_middleware_1.resolveBatch);
 router.get("/:batchSlug/topics", topic_controller_1.getTopicsForBatch);

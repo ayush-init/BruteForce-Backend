@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * API Error Class - Custom error handling for HTTP responses
+ * Provides structured error responses with consistent format
+ * Extends native Error class with additional properties
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DatabaseError = exports.NotFoundError = exports.AuthError = exports.ValidationError = exports.ApiError = void 0;
 class ApiError extends Error {
@@ -20,7 +25,10 @@ class ApiError extends Error {
     }
 }
 exports.ApiError = ApiError;
-// Pre-defined Error Types
+/**
+ * Pre-defined Error Types - Specialized error classes for common scenarios
+ * Provides specific error types with appropriate status codes and error codes
+ */
 class ValidationError extends ApiError {
     constructor(message = "Validation failed", errors = []) {
         super(400, message, errors, "VALIDATION_ERROR");

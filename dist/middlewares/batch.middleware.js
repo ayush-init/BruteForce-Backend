@@ -16,7 +16,16 @@ const resolveBatch = async (req, res, next) => {
     if (!batch) {
         return res.status(404).json({ error: "Batch not found" });
     }
-    req.batch = batch;
+    // Map database result to ExtendedRequest batch type
+    req.batch = {
+        id: batch.id,
+        name: batch.batch_name,
+        year: batch.year,
+        city_id: batch.city_id,
+        slug: batch.slug,
+        created_at: batch.created_at.toISOString(),
+        updated_at: batch.created_at.toISOString(), // Use created_at as updated_at since it's not in DB
+    };
     next();
 };
 exports.resolveBatch = resolveBatch;

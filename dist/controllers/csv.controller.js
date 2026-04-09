@@ -1,23 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadBatchReportController = void 0;
-const csv_service_1 = require("../services/csv.service");
+const csv_service_1 = require("../services/admin/csv.service");
 const asyncHandler_1 = require("../utils/asyncHandler");
 const ApiError_1 = require("../utils/ApiError");
 exports.downloadBatchReportController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { batch_id } = req.body;
-        console.log('Controller: Received request for batch_id:', batch_id);
         // Generate CSV report (service handles validation)
         const { csvContent, filename } = await (0, csv_service_1.generateBatchReportCSV)(batch_id);
-        console.log('Controller: Service returned filename:', filename);
         // Set headers for CSV download
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-        console.log('Controller: Response headers set with filename:', filename);
         return res.status(200).json({
             success: true,
             filename: filename,

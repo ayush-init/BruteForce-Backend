@@ -1,12 +1,25 @@
 "use strict";
+/**
+ * Email Utility - Email sending functionality
+ * Provides email sending capabilities with nodemailer
+ * Handles OTP email delivery with professional HTML templates
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendOTPEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
-// Create email transporter
+const ApiError_1 = require("./ApiError");
+/**
+ * Create and configure email transporter
+ * @returns Configured nodemailer transporter
+ * @throws ApiError if email configuration is missing
+ */
 const createTransporter = () => {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        throw new ApiError_1.ApiError(500, "Email configuration is missing", [], "EMAIL_CONFIG_MISSING");
+    }
     return nodemailer_1.default.createTransport({
         service: 'gmail',
         auth: {
@@ -15,7 +28,13 @@ const createTransporter = () => {
         }
     });
 };
-// Send OTP email with new design
+/**
+ * Send OTP email with professional HTML template
+ * @param email - Recipient email address
+ * @param otp - One-time password to send
+ * @param userName - Optional user name for personalization
+ * @throws ApiError if email sending fails
+ */
 const sendOTPEmail = async (email, otp, userName) => {
     try {
         const transporter = createTransporter();
@@ -136,11 +155,11 @@ const sendOTPEmail = async (email, otp, userName) => {
 `
         };
         await transporter.sendMail(mailOptions);
-        console.log(`OTP email sent to ${email}`);
+        // Email sent successfully
     }
     catch (error) {
-        console.error('Error sending OTP email:', error);
-        throw error;
+        const errorMessage = error instanceof Error ? error.message : "Failed to send OTP email";
+        throw new ApiError_1.ApiError(500, `Email sending failed: ${errorMessage}`, [], "EMAIL_SEND_ERROR");
     }
 };
 exports.sendOTPEmail = sendOTPEmail;

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const username_controller_1 = require("../controllers/username.controller");
+const student_controller_1 = require("../controllers/student.controller");
 const router = (0, express_1.Router)();
 // Public route - no authentication required for username check
-router.get("/check-username", username_controller_1.checkUsernameAvailability);
+router.get("/check-username", student_controller_1.checkUsernameAvailability);
 exports.default = router;

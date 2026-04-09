@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteProfileImage = exports.uploadProfileImage = void 0;
-const profileImage_service_1 = require("../services/profileImage.service");
+const profileImage_service_1 = require("../services/students/profileImage.service");
 const asyncHandler_1 = require("../utils/asyncHandler");
 const ApiError_1 = require("../utils/ApiError");
 exports.uploadProfileImage = (0, asyncHandler_1.asyncHandler)(async (req, res) => {

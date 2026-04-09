@@ -1,7 +1,15 @@
 "use strict";
+/**
+ * Error Mapper Utility - Database error mapping and error message standardization
+ * Maps database errors to appropriate HTTP status codes and user-friendly messages
+ * Provides consistent error handling across the application
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserFriendlyMessage = exports.mapDatabaseError = exports.ERROR_MESSAGES = exports.HTTP_STATUS = void 0;
 const ApiError_1 = require("./ApiError");
+/**
+ * HTTP status codes constants
+ */
 exports.HTTP_STATUS = {
     BAD_REQUEST: 400,
     UNAUTHORIZED: 401,
@@ -51,6 +59,12 @@ exports.ERROR_MESSAGES = {
     FILE_UPLOAD_ERROR: 'File upload failed',
     EMAIL_SEND_ERROR: 'Failed to send email'
 };
+/**
+ * Map database errors to appropriate API errors
+ * @param error - Database error object
+ * @param resource - Resource name for error messages
+ * @returns Mapped ApiError with appropriate status code and message
+ */
 const mapDatabaseError = (error, resource) => {
     if (error.code === "P2025") {
         return new ApiError_1.ApiError(exports.HTTP_STATUS.NOT_FOUND, `${resource} not found`, [], "NOT_FOUND");
@@ -74,6 +88,13 @@ const mapDatabaseError = (error, resource) => {
     return new ApiError_1.ApiError(exports.HTTP_STATUS.INTERNAL_SERVER_ERROR, "Database operation failed", [], "DATABASE_ERROR");
 };
 exports.mapDatabaseError = mapDatabaseError;
+/**
+ * Get user-friendly error message based on status code and error code
+ * @param statusCode - HTTP status code
+ * @param message - Original error message
+ * @param code - Optional error code for specific mapping
+ * @returns User-friendly error message
+ */
 const getUserFriendlyMessage = (statusCode, message, code) => {
     // First check if we have a specific mapping for the error code
     if (code) {

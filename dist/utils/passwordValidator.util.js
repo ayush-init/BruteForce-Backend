@@ -9,9 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PASSWORD_RULES = void 0;
 exports.validatePassword = validatePassword;
 exports.validatePasswordForAuth = validatePasswordForAuth;
-exports.getPasswordStrength = getPasswordStrength;
-exports.getPasswordRequirements = getPasswordRequirements;
-exports.meetsMinimumRequirements = meetsMinimumRequirements;
 /**
  * Password validation rules with regex patterns
  */
@@ -124,28 +121,4 @@ function validatePasswordForAuth(password) {
         error.type = 'VALIDATION_ERROR';
         throw error;
     }
-}
-/**
- * Check password strength independently (for UI indicators)
- * @param password - Password string to check
- * @returns 'weak' | 'medium' | 'strong'
- */
-function getPasswordStrength(password) {
-    const validation = validatePassword(password);
-    return validation.strength;
-}
-/**
- * Get password requirements array for UI display
- * @returns Array of requirement descriptions
- */
-function getPasswordRequirements() {
-    return exports.PASSWORD_RULES.map(rule => rule.description);
-}
-/**
- * Check if password meets minimum requirements (for basic validation)
- * @param password - Password string to check
- * @returns boolean indicating if minimum requirements are met
- */
-function meetsMinimumRequirements(password) {
-    return validatePassword(password).isValid;
 }

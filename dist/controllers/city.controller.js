@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCity = exports.updateCity = exports.getAllCities = exports.createCity = void 0;
-const city_service_1 = require("../services/city.service");
+const city_service_1 = require("../services/cities/city.service");
 const asyncHandler_1 = require("../utils/asyncHandler");
 const ApiError_1 = require("../utils/ApiError");
 // Create City

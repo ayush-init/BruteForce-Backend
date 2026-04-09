@@ -5,13 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bulkTestUploadQuestions = exports.getPaginatedTopics = exports.getTopicProgressByUsername = exports.createTopicsBulk = exports.getTopicOverviewWithClassesSummary = exports.getTopicsWithBatchProgress = exports.deleteTopic = exports.updateTopic = exports.getTopicsForBatch = exports.getAllTopics = exports.createTopic = void 0;
 const prisma_1 = __importDefault(require("../config/prisma"));
-const topic_service_1 = require("../services/topic.service");
+const topic_service_1 = require("../services/topics/topic.service");
+const topic_query_service_1 = require("../services/topics/topic-query.service");
+const topic_progress_service_1 = require("../services/topics/topic-progress.service");
 const asyncHandler_1 = require("../utils/asyncHandler");
 const ApiError_1 = require("../utils/ApiError");
 const slugify_1 = require("../utils/slugify");
-const question_service_1 = require("../services/question.service");
+const question_utils_service_1 = require("../services/questions/question-utils.service");
 exports.createTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    console.log("Create Topic req.body:", req.body);
     const topic_name = req.body?.topic_name;
     const photo = req.file;
     if (!topic_name) {
@@ -25,19 +26,21 @@ exports.createTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
 });
 // Get All Topics
 exports.getAllTopics = (0, asyncHandler_1.asyncHandler)(async (_req, res) => {
-    const topics = await (0, topic_service_1.getAllTopicsService)();
+    const topics = await (0, topic_query_service_1.getAllTopicsService)();
     return res.json(topics);
 });
 exports.getTopicsForBatch = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     const batch = req.batch;
-    const data = await (0, topic_service_1.getTopicsForBatchService)({
+    if (!batch) {
+        throw new ApiError_1.ApiError(401, "Authentication required - batch information missing");
+    }
+    const data = await (0, topic_query_service_1.getTopicsForBatchService)({
         batchId: batch.id,
         query: req.query
     });
     return res.json(data);
 });
 exports.updateTopic = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    console.log("Update Topic req.body:", req.body);
     const topicSlug = req.params.topicSlug;
     const topic_name = req.body?.topic_name;
     const removePhoto = req.body?.removePhoto;
@@ -74,7 +77,7 @@ exports.getTopicsWithBatchProgress = (0, asyncHandler_1.asyncHandler)(async (req
     if (!studentId || !batchId) {
         throw new ApiError_1.ApiError(401, "Student authentication required", [], "UNAUTHORIZED");
     }
-    const topics = await (0, topic_service_1.getTopicsWithBatchProgressService)({
+    const topics = await (0, topic_progress_service_1.getTopicsWithBatchProgressService)({
         studentId,
         batchId,
         query: req.query,
@@ -83,27 +86,22 @@ exports.getTopicsWithBatchProgress = (0, asyncHandler_1.asyncHandler)(async (req
 });
 // Student-specific controller - get topic overview with classes summary
 exports.getTopicOverviewWithClassesSummary = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    const requestId = Math.random().toString(36).substr(2, 9);
-    console.log(`[${requestId}] CONTROLLER START: getTopicOverviewWithClassesSummary`);
     // Get student info from middleware (extractStudentInfo)
     const student = req.student;
-    const batchId = req.batchId;
-    const { topicSlug } = req.params;
     const studentId = student?.id;
+    const batchId = req.batchId;
+    const topicSlug = req.params.topicSlug;
     // Ensure topicSlug is a string (not string array)
     const slug = Array.isArray(topicSlug) ? topicSlug[0] : topicSlug;
-    console.log(`[${requestId}] CONTROLLER: studentId=${studentId}, batchId=${batchId}, topicSlug=${slug}`);
     if (!studentId || !batchId || !slug) {
         throw new ApiError_1.ApiError(400, "Student authentication and topic slug required", [], "REQUIRED_FIELD");
     }
-    console.log(`[${requestId}] CONTROLLER: Calling service`);
-    const topicOverview = await (0, topic_service_1.getTopicOverviewWithClassesSummaryService)({
+    const topicOverview = await (0, topic_progress_service_1.getTopicOverviewWithClassesSummaryService)({
         studentId,
         batchId,
         topicSlug: slug,
         query: req.query,
     });
-    console.log(`[${requestId}] CONTROLLER: Sending response`);
     return res.json(topicOverview);
 });
 exports.createTopicsBulk = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
@@ -136,7 +134,7 @@ exports.getTopicProgressByUsername = (0, asyncHandler_1.asyncHandler)(async (req
     if (!username || Array.isArray(username)) {
         throw new ApiError_1.ApiError(400, "Valid username is required", [], "REQUIRED_FIELD");
     }
-    const result = await (0, topic_service_1.getTopicProgressByUsernameService)(username);
+    const result = await (0, topic_progress_service_1.getTopicProgressByUsernameService)(username);
     // Sort topics based on sortBy parameter
     let sortedTopics = result.topics;
     if (sortBy === 'solved') {
@@ -156,7 +154,7 @@ exports.getPaginatedTopics = (0, asyncHandler_1.asyncHandler)(async (req, res) =
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 6;
     const search = req.query.search || '';
-    const result = await (0, topic_service_1.getPaginatedTopicsService)({ page, limit, search });
+    const result = await (0, topic_query_service_1.getPaginatedTopicsService)({ page, limit, search });
     return res.json(result);
 });
 exports.bulkTestUploadQuestions = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
@@ -227,7 +225,7 @@ exports.bulkTestUploadQuestions = (0, asyncHandler_1.asyncHandler)(async (req, r
         question_link: q.question_link,
         level: q.level,
         topic_id: topicMap.get(q.topic_slug), // We know this exists after validation
-        platform: (0, question_service_1.detectPlatform)(q.question_link), // Detect platform from question link
+        platform: (0, question_utils_service_1.detectPlatform)(q.question_link), // Detect platform from question link
     }));
     const created = await prisma_1.default.question.createMany({
         data: questionsData,
