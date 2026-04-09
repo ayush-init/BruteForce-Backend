@@ -58,8 +58,8 @@ export const getAdminLeaderboard = asyncHandler(async (req: Request, res: Respon
             max_streak: entry.max_streak || 0,
             total_solved: Number(entry.total_solved || 0),
             score: Number(entry.score || 0),
-            global_rank: entry.alltime_global_rank,
-            city_rank: entry.alltime_city_rank
+            global_rank: entry.global_rank,
+            city_rank: entry.city_rank
         };
     });
     
@@ -126,8 +126,8 @@ export const getStudentLeaderboard = asyncHandler(async (req: ExtendedRequest, r
             max_streak: entry.max_streak || 0,
             total_solved: Number(entry.total_solved || 0),
             score: Number(entry.score || 0),
-            global_rank: entry.alltime_global_rank,
-            city_rank: entry.alltime_city_rank
+            global_rank: entry.global_rank,
+            city_rank: entry.city_rank
         };
     });
 
@@ -240,8 +240,8 @@ export const getLeaderboardByType = asyncHandler(async (req: ExtendedRequest, re
         });
 
         const studentRank = studentEntry ? {
-            global_rank: studentEntry.alltime_global_rank,
-            city_rank: studentEntry.alltime_city_rank,
+            global_rank: studentEntry.global_rank,
+            city_rank: studentEntry.city_rank,
             student_details: {
                 student_id: studentId,
                 name: student?.name || '',
@@ -258,8 +258,8 @@ export const getLeaderboardByType = asyncHandler(async (req: ExtendedRequest, re
                 last_synced_at: student?.last_synced_at
             },
             rank_statistics: {
-                global_rank: studentEntry.alltime_global_rank,
-                city_rank: studentEntry.alltime_city_rank,
+                global_rank: studentEntry.global_rank,
+                city_rank: studentEntry.city_rank,
                 score: studentEntry.score,
                 max_streak: studentEntry.max_streak,
                 total_solved: studentEntry.total_solved,

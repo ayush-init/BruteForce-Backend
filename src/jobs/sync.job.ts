@@ -33,7 +33,7 @@ cron.schedule("0 9,18,23 * * *", async () => {
         const totalDuration = Date.now() - studentSyncStart;
         console.log(`❤️❤️❤️❤️❤️❤️❤️ Combined sync cycle completed successfully in ${totalDuration}ms`);
         console.log(`❤️❤️❤️❤️❤️❤️❤️ Processed ${leaderboardResult.studentsProcessed} students`);
-        
+
         break;
         
       } catch (error) {
