@@ -40,6 +40,8 @@ export const validateTopicSlug = (topicSlugParam: any): string => {
 
 export const validateClassCreateData = (body: any, file?: any): ClassCreateData => {
   const {
+    batchId,
+    topicSlug,
     class_name,
     description,
     pdf_url,
@@ -48,6 +50,14 @@ export const validateClassCreateData = (body: any, file?: any): ClassCreateData 
   } = body;
 
   // Validate required fields
+  if (!batchId || typeof batchId !== 'number') {
+    throw new ApiError(400, "Batch ID is required and must be a number", [], "VALIDATION_ERROR");
+  }
+
+  if (!topicSlug || typeof topicSlug !== 'string') {
+    throw new ApiError(400, "Topic slug is required and must be a string", [], "VALIDATION_ERROR");
+  }
+
   if (!class_name || typeof class_name !== 'string') {
     throw new ApiError(400, "Class name is required and must be a string", [], "VALIDATION_ERROR");
   }
@@ -91,6 +101,8 @@ export const validateClassCreateData = (body: any, file?: any): ClassCreateData 
   }
 
   return {
+    batchId,
+    topicSlug,
     class_name,
     description: description || undefined,
     pdf_url: pdf_url || undefined,

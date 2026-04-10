@@ -55,6 +55,13 @@ export interface TopicQueryParams {
   search?: string;
 }
 
+// Class Query Types
+export interface ClassQueryParams {
+  page: number;
+  limit: number;
+  search: string;
+}
+
 // Class Management Types
 export interface CreateClassDTO {
   batchId: number;

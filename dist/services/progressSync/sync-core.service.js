@@ -9,7 +9,7 @@ const leetcode_service_1 = require("../external/leetcode.service");
 const gfg_service_1 = require("../external/gfg.service");
 const ApiError_1 = require("../../utils/ApiError");
 const sync_utils_service_1 = require("./sync-utils.service");
-async function syncOneStudent(studentId, compareRealCount = true) {
+async function syncOneStudent(studentId, batchData, compareRealCount = true) {
     // 1 Load student + already solved progress from StudentProgress table
     const student = await prisma_1.default.student.findUnique({
         where: { id: studentId },
@@ -23,21 +23,26 @@ async function syncOneStudent(studentId, compareRealCount = true) {
         throw new ApiError_1.ApiError(400, "Student not found");
     if (!student.batch_id)
         throw new ApiError_1.ApiError(400, "Student has no batch");
-    // 2 Get batch questions through proper table relationships
-    // Batch -> Class -> QuestionVisibility -> Question
-    const batchQuestions = await prisma_1.default.$queryRaw `
-    SELECT DISTINCT q.id, q.question_link
-    FROM "Question" q
-    JOIN "QuestionVisibility" qv ON q.id = qv.question_id
-    JOIN "Class" c ON qv.class_id = c.id
-    WHERE c.batch_id = ${student.batch_id}
-  `;
-    // 3 Build slug -> questionId map for quick API slug to DB ID lookup
+    // 2 Get batch questions from memory store (no DB fallback)
+    if (!batchData) {
+        console.error(`[SYNC_CORE] Missing batch data for batch: ${student.batch_id}`);
+        return {
+            message: "Sync skipped - missing batch data",
+            newSolved: 0,
+            hadNewSolutions: false,
+            compareRealCount: compareRealCount
+        };
+    }
+    // Use pre-loaded batch data from memory (optimized)
+    console.log(`[SYNC_CORE] Using pre-loaded batch data for batch ${student.batch_id}`);
     const questionMap = new Map();
-    batchQuestions.forEach(q => {
-        const slug = (0, sync_utils_service_1.extractSlug)(q.question_link);
-        if (slug) {
-            questionMap.set(slug, q.id);
+    batchData.question_links.forEach((link, index) => {
+        const questionId = batchData.question_ids[index];
+        if (questionId) {
+            const slug = (0, sync_utils_service_1.extractSlug)(link);
+            if (slug) {
+                questionMap.set(slug, questionId);
+            }
         }
     });
     // 4 Already solved set to avoid duplicate progress entries

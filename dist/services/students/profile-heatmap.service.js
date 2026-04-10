@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.invalidateStudentHeatmapCache = exports.getTodayCount = exports.hasQuestionToday = exports.hasCompletedAllQuestions = exports.getBatchStartMonth = exports.getBatchStartMonthFromDates = exports.fetchSubmissionCounts = exports.fetchAssignedDates = exports.buildHeatmapOptimized = exports.normalizeDate = void 0;
+exports.getTodayCount = exports.hasQuestionToday = exports.hasCompletedAllQuestions = exports.getBatchStartMonth = exports.fetchSubmissionCounts = exports.fetchAssignedDates = exports.buildHeatmapOptimized = exports.normalizeDate = void 0;
 const prisma_1 = __importDefault(require("../../config/prisma"));
 const cache_service_1 = require("../cache.service");
 /**
@@ -123,22 +123,6 @@ const fetchSubmissionCounts = async (studentId, startDate) => {
 };
 exports.fetchSubmissionCounts = fetchSubmissionCounts;
 /**
- * Get batch start month using the already-fetched assigned dates
- * This avoids a separate slow MIN() query
- */
-const getBatchStartMonthFromDates = (assignedDates, batchYear) => {
-    if (assignedDates.size === 0) {
-        // Fallback to batch year or today
-        return batchYear ? new Date(batchYear, 0, 1) : new Date();
-    }
-    // Find earliest date from assigned dates
-    const dates = Array.from(assignedDates).sort();
-    const earliestDate = new Date(dates[0]);
-    // Return first day of that month
-    return new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1);
-};
-exports.getBatchStartMonthFromDates = getBatchStartMonthFromDates;
-/**
  * Legacy: Get batch start month (first question assignment date) - CACHED
  * Uses optimized query with index
  */
@@ -194,12 +178,3 @@ const getTodayCount = (submissionCounts) => {
     return submissionCounts.get(today) || 0;
 };
 exports.getTodayCount = getTodayCount;
-/**
- * Invalidate heatmap cache for a student
- * Call this when student solves a new question
- */
-const invalidateStudentHeatmapCache = async (studentId, batchId) => {
-    const pattern = `heatmap:${studentId}:${batchId}:*`;
-    await cache_service_1.cacheService.delPattern(pattern);
-};
-exports.invalidateStudentHeatmapCache = invalidateStudentHeatmapCache;

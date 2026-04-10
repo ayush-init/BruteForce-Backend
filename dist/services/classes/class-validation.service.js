@@ -29,8 +29,14 @@ const validateTopicSlug = (topicSlugParam) => {
 };
 exports.validateTopicSlug = validateTopicSlug;
 const validateClassCreateData = (body, file) => {
-    const { class_name, description, pdf_url, duration_minutes, class_date, } = body;
+    const { batchId, topicSlug, class_name, description, pdf_url, duration_minutes, class_date, } = body;
     // Validate required fields
+    if (!batchId || typeof batchId !== 'number') {
+        throw new ApiError_1.ApiError(400, "Batch ID is required and must be a number", [], "VALIDATION_ERROR");
+    }
+    if (!topicSlug || typeof topicSlug !== 'string') {
+        throw new ApiError_1.ApiError(400, "Topic slug is required and must be a string", [], "VALIDATION_ERROR");
+    }
     if (!class_name || typeof class_name !== 'string') {
         throw new ApiError_1.ApiError(400, "Class name is required and must be a string", [], "VALIDATION_ERROR");
     }
@@ -68,6 +74,8 @@ const validateClassCreateData = (body, file) => {
         }
     }
     return {
+        batchId,
+        topicSlug,
         class_name,
         description: description || undefined,
         pdf_url: pdf_url || undefined,

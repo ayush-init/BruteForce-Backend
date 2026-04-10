@@ -1,68 +1,133 @@
 import cron from "node-cron";
-import { runStudentSyncWorker } from "../workers/sync.worker";
-import { syncLeaderboardData } from "../services/leaderboardSync/sync-core.service";
+import prisma from "../config/prisma";
+import { studentSyncQueue } from "../queues/studentSync.queue";
+import { tryRunLeaderboard } from "../services/leaderboardSync/leaderboardWindow.service";
+import { startSync, isSyncRunning } from "../utils/syncStatus";
+import { setBatchQuestions } from "../store/batchQuestions.store";
 
 export function startSyncJob() {
 
-  console.log("Sync cron job started");
-  
-  //  Combined sync job: Student Progress FIRST, then Leaderboard
-cron.schedule("0 9,18,23 * * *", async () => {
-// Runs: 9:00 AM, 18:00 (6 PM), 23:00 (11 PM)
-    const maxRetries = 3;
-    let attempt = 0;
-    
-    while (attempt < maxRetries) {
-      try {
-        console.log(` Starting combined sync cycle (attempt ${attempt + 1}/${maxRetries})...`);
-        
-        // Step 1: Update student progress first
-        console.log("🎶🎶🎶🎶 Step 1: Syncing student progress...");
-        const studentSyncStart = Date.now();
-        await runStudentSyncWorker();
-        const studentSyncDuration = Date.now() - studentSyncStart;
-        console.log(` Student progress sync completed in ${studentSyncDuration}ms`);
-        
-        // Step 2: Update leaderboard after student progress is complete
-        console.log(" Step 2: Updating leaderboard cache...");
-        const leaderboardSyncStart = Date.now();
-        const leaderboardResult = await syncLeaderboardData();
-        const leaderboardSyncDuration = Date.now() - leaderboardSyncStart;
-        console.log(`❤️❤️❤️❤️❤️❤️❤️ Leaderboard sync completed in ${leaderboardSyncDuration}ms`);
+  console.log("[CRON] Sync cron job system started");
+  const ENABLE_CRON = false;
 
-        const totalDuration = Date.now() - studentSyncStart;
-        console.log(`❤️❤️❤️❤️❤️❤️❤️ Combined sync cycle completed successfully in ${totalDuration}ms`);
-        console.log(`❤️❤️❤️❤️❤️❤️❤️ Processed ${leaderboardResult.studentsProcessed} students`);
 
-        break;
-        
-      } catch (error) {
-        attempt++;
-        console.error(`Sync attempt ${attempt} failed:`, error);
-        
-        if (attempt >= maxRetries) {
-          console.error("All sync attempts failed. Please investigate the issue.");
-          // Alert/notification system for sync failures
-          // Log critical failure for monitoring system
-          console.error(`CRITICAL: Student sync failed after ${maxRetries} attempts`);
-          
-          // In production, this would trigger:
-          // - Email/SMS alerts to administrators
-          // - Monitoring system alerts
-          // - Incident response team notification
-          // For now, we log the critical error for monitoring
+  if (ENABLE_CRON) {
+    // Student Sync Cron: 5 AM, 2 PM, 8 PM
+    // cron.schedule("0 5,14,20 * * *", async () => {
+    cron.schedule("*/2 * * * *", async () => {
+      const maxRetries = 3;
+      let attempt = 0;
+
+      while (attempt < maxRetries) {
+        try {
+          // Check if sync is already running
+          if (isSyncRunning()) {
+            console.log(`[CRON] Sync already running, skipping this cycle`);
+            return;
+          }
+
+          console.log(`[CRON] Student sync cycle started (attempt ${attempt + 1}/${maxRetries})`);
+
+          // Check if queue is empty before starting new sync
+          const queueCount = await studentSyncQueue.count();
+          if (queueCount > 0) {
+            console.log(`[CRON] Queue not empty (${queueCount} jobs), skipping new sync`);
+            return;
+          }
+
+          // Set sync status
+          startSync();
+
+          // Load all batch questions once per sync cycle
+          console.log(`[CRON] Loading batch questions for optimized sync`);
+          const batchQuestionsQuery = await prisma.$queryRaw`
+            SELECT 
+              b.id as batch_id,
+              array_agg(DISTINCT q.id) as question_ids,
+              array_agg(DISTINCT q.question_link) as question_links
+            FROM "Batch" b
+            JOIN "Class" c ON c.batch_id = b.id
+            JOIN "QuestionVisibility" qv ON qv.class_id = c.id
+            JOIN "Question" q ON q.id = qv.question_id
+            WHERE EXISTS (
+              SELECT 1 FROM "Student" s WHERE s.batch_id = b.id
+            )
+            GROUP BY b.id
+          ` as { batch_id: number; question_ids: number[]; question_links: string[] }[];
+
+          // Convert to Map and store in memory
+          const batchQuestionsMap = new Map<number, { question_ids: number[]; question_links: string[] }>();
+          batchQuestionsQuery.forEach(batch => {
+            batchQuestionsMap.set(batch.batch_id, {
+              question_ids: batch.question_ids || [],
+              question_links: batch.question_links || []
+            });
+          });
+
+          setBatchQuestions(batchQuestionsMap);
+          console.log(`[CRON] Loaded questions for ${batchQuestionsMap.size} batches`);
+
+          // Get all students with batch assignments
+          const students = await prisma.student.findMany({
+            where: {
+              batch_id: { not: null }
+            },
+            select: {
+              id: true,
+              batch_id: true
+            }
+          });
+
+          console.log(`[CRON] Adding ${students.length} students to sync queue`);
+
+          // Add all students to queue in bulk with batchId
+          const jobs = students.map(student => ({
+            name: 'sync-student',
+            data: { studentId: student.id, batchId: student.batch_id },
+            opts: {
+              attempts: 3,
+              backoff: {
+                type: 'exponential',
+                delay: 1000
+              }
+            }
+          }));
+
+          await studentSyncQueue.addBulk(jobs);
+          console.log(`[CRON]❤️❤️❤️❤️ Successfully added ${students.length} students to sync queue`);
+
           break;
+
+        } catch (error) {
+          attempt++;
+          console.error(`[CRON] Student sync attempt ${attempt} failed:`, error);
+
+          if (attempt >= maxRetries) {
+            console.error("[CRON] All student sync attempts failed");
+            break;
+          }
+
+          // Exponential backoff: 2s, 4s, 8s
+          const delay = Math.pow(2, attempt) * 1000;
+          console.log(`[CRON] Retrying student sync in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
-        
-        // Exponential backoff: 2s, 4s, 8s
-        const delay = Math.pow(2, attempt) * 1000;
-        console.log(`Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
       }
+    });
+  }
+
+  // Leaderboard Sync Cron: 9 AM, 6 PM, 11 PM
+  cron.schedule("0 9,18,23 * * *", async () => {
+    try {
+      console.log("[CRON] Leaderboard sync cycle started");
+      await tryRunLeaderboard();
+      console.log("[CRON] Leaderboard sync cycle completed");
+    } catch (error) {
+      console.error("[CRON] Leaderboard sync failed:", error);
     }
   });
 
-  console.log("Sequential cron job started successfully");
-  console.log("Combined sync: Every 4 hours at minute 0 (Student Progress → Leaderboard)");
-  console.log("Retry logic: Up to 3 attempts with exponential backoff");
+  console.log("[CRON] Student sync: 5 AM, 2 PM, 8 PM (0 5,14,20 * * *)");
+  console.log("[CRON] Leaderboard sync: 9 AM, 6 PM, 11 PM (0 9,18,23 * * *)");
+  console.log("[CRON] Queue-based system with rate limiting and retry logic initialized");
 }

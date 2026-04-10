@@ -7,6 +7,11 @@ exports.buildLeaderboardBaseQueryByCityId = buildLeaderboardBaseQueryByCityId;
 exports.getCachedYears = getCachedYears;
 exports.getCachedCityYearMapping = getCachedCityYearMapping;
 exports.getAvailableYears = getAvailableYears;
+exports.buildLeaderboardBaseQuery = buildLeaderboardBaseQuery;
+exports.clearMetadataCache = clearMetadataCache;
+exports.buildSelectClause = buildSelectClause;
+exports.buildFromClause = buildFromClause;
+exports.normalizeLeaderboardRow = normalizeLeaderboardRow;
 exports.handleLeaderboardError = handleLeaderboardError;
 const prisma_1 = __importDefault(require("../../config/prisma"));
 const ApiError_1 = require("../../utils/ApiError");
@@ -117,6 +122,77 @@ async function getCachedCityYearMapping() {
  */
 async function getAvailableYears() {
     return getCachedYears();
+}
+/**
+ * Build base WHERE and ORDER BY clauses (legacy function for compatibility)
+ */
+function buildLeaderboardBaseQuery(year, city, search) {
+    // For compatibility, this function now delegates to the cityId version
+    // In practice, city should be resolved to cityId before calling
+    return buildLeaderboardBaseQueryByCityId(year, undefined, search);
+}
+/**
+ * Clear metadata cache
+ */
+function clearMetadataCache() {
+    metadataCache.years = null;
+    metadataCache.cityYearMap = null;
+}
+/**
+ * Build SELECT clause for leaderboard queries
+ */
+function buildSelectClause() {
+    return `
+    SELECT 
+      s.id,
+      s.name,
+      s.username,
+      s.photo_url,
+      c.city_name,
+      b.year,
+      l.alltime_global_rank,
+      l.alltime_city_rank,
+      l.alltime_score,
+      l.monthly_global_rank,
+      l.monthly_city_rank,
+      l.monthly_score
+  `;
+}
+/**
+ * Build FROM clause for leaderboard queries
+ */
+function buildFromClause() {
+    return `
+    FROM "Student" s
+    JOIN "City" c ON s.city_id = c.id
+    JOIN "Batch" b ON s.batch_id = b.id
+    JOIN "Leaderboard" l ON s.id = l.student_id
+  `;
+}
+/**
+ * Normalize leaderboard row data
+ */
+function normalizeLeaderboardRow(row) {
+    return {
+        id: row.id,
+        name: row.name,
+        username: row.username,
+        photo_url: row.photo_url,
+        city_name: row.city_name,
+        year: row.year,
+        ranks: {
+            alltime: {
+                global: row.alltime_global_rank,
+                city: row.alltime_city_rank,
+                score: row.alltime_score
+            },
+            monthly: {
+                global: row.monthly_global_rank,
+                city: row.monthly_city_rank,
+                score: row.monthly_score
+            }
+        }
+    };
 }
 /**
  * Handle leaderboard errors consistently

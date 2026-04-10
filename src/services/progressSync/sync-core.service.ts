@@ -4,8 +4,14 @@ import { fetchGfgData } from "../external/gfg.service";
 import { ApiError } from "../../utils/ApiError";
 import { extractSlug } from "./sync-utils.service";
 
+interface BatchQuestionData {
+  question_ids: number[];
+  question_links: string[];
+}
+
 export async function syncOneStudent(
   studentId: number, 
+  batchData?: BatchQuestionData,
   compareRealCount: boolean = true
 ) {
 
@@ -23,23 +29,28 @@ export async function syncOneStudent(
   if (!student.batch_id) throw new ApiError(400, "Student has no batch");
 
 
-  // 2 Get batch questions through proper table relationships
-  // Batch -> Class -> QuestionVisibility -> Question
-  const batchQuestions = await prisma.$queryRaw`
-    SELECT DISTINCT q.id, q.question_link
-    FROM "Question" q
-    JOIN "QuestionVisibility" qv ON q.id = qv.question_id
-    JOIN "Class" c ON qv.class_id = c.id
-    WHERE c.batch_id = ${student.batch_id}
-  ` as { id: number; question_link: string }[];
-
-
-  // 3 Build slug -> questionId map for quick API slug to DB ID lookup
+  // 2 Get batch questions from memory store (no DB fallback)
+  if (!batchData) {
+    console.error(`[SYNC_CORE] Missing batch data for batch: ${student.batch_id}`);
+    return {
+      message: "Sync skipped - missing batch data",
+      newSolved: 0,
+      hadNewSolutions: false,
+      compareRealCount: compareRealCount
+    };
+  }
+  
+  // Use pre-loaded batch data from memory (optimized)
+  console.log(`[SYNC_CORE] Using pre-loaded batch data for batch ${student.batch_id}`);
+  
   const questionMap = new Map<string, number>();
-  batchQuestions.forEach(q => {
-    const slug = extractSlug(q.question_link);
-    if (slug) {
-      questionMap.set(slug, q.id);
+  batchData.question_links.forEach((link, index) => {
+    const questionId = batchData.question_ids[index];
+    if (questionId) {
+      const slug = extractSlug(link);
+      if (slug) {
+        questionMap.set(slug, questionId);
+      }
     }
   });
 

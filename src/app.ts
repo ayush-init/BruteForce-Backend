@@ -13,6 +13,8 @@ import publicRoutes from './routes/public.routes';
 import userRoutes from './routes/user.routes';
 import { startSyncJob } from './jobs/sync.job';
 import { apiLimiter } from './middlewares/rateLimiter';
+import './workers/studentSync.worker'; // Initialize BullMQ worker
+import './queues/studentSync.events'; // Initialize QueueEvents
 
 dotenv.config();
 

@@ -17,6 +17,8 @@ const public_routes_1 = __importDefault(require("./routes/public.routes"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const sync_job_1 = require("./jobs/sync.job");
 const rateLimiter_1 = require("./middlewares/rateLimiter");
+require("./workers/studentSync.worker"); // Initialize BullMQ worker
+require("./queues/studentSync.events"); // Initialize QueueEvents
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middlewares
