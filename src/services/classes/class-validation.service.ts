@@ -1,6 +1,16 @@
 import { ApiError } from "../../utils/ApiError";
 import { ClassQueryParams, CreateClassDTO } from "../../types/topic.types";
 
+// Type for body-only validation (batchId and topicSlug come from params/middleware)
+export interface ClassCreateBodyData {
+  class_name: string;
+  description?: string;
+  pdf_url?: string;
+  pdf_file?: Express.Multer.File;
+  duration_minutes?: number | string;
+  class_date?: string;
+}
+
 // Alias for compatibility with existing code
 export type ClassCreateData = CreateClassDTO;
 
@@ -38,10 +48,8 @@ export const validateTopicSlug = (topicSlugParam: any): string => {
   return topicSlugParam;
 };
 
-export const validateClassCreateData = (body: any, file?: any): ClassCreateData => {
+export const validateClassCreateData = (body: any, file?: any): ClassCreateBodyData => {
   const {
-    batchId,
-    topicSlug,
     class_name,
     description,
     pdf_url,
@@ -50,14 +58,6 @@ export const validateClassCreateData = (body: any, file?: any): ClassCreateData 
   } = body;
 
   // Validate required fields
-  if (!batchId || typeof batchId !== 'number') {
-    throw new ApiError(400, "Batch ID is required and must be a number", [], "VALIDATION_ERROR");
-  }
-
-  if (!topicSlug || typeof topicSlug !== 'string') {
-    throw new ApiError(400, "Topic slug is required and must be a string", [], "VALIDATION_ERROR");
-  }
-
   if (!class_name || typeof class_name !== 'string') {
     throw new ApiError(400, "Class name is required and must be a string", [], "VALIDATION_ERROR");
   }
@@ -101,8 +101,6 @@ export const validateClassCreateData = (body: any, file?: any): ClassCreateData 
   }
 
   return {
-    batchId,
-    topicSlug,
     class_name,
     description: description || undefined,
     pdf_url: pdf_url || undefined,
