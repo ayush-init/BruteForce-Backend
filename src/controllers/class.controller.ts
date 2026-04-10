@@ -45,9 +45,7 @@ export const createClassInTopic = asyncHandler(async (
             const topicSlug = validateTopicSlug(req.params.topicSlug);
             const classData = validateClassCreateData(req.body, req.file);
 
-            if (!classData.class_name || !classData.description || !classData.pdf_url || !classData.pdf_file || !classData.duration_minutes || !classData.class_date) {
-              throw new ApiError(400, "Invalid class data");
-            }
+            
 
             const newClass = await createClassInTopicService({
               batchId: batch.id,
