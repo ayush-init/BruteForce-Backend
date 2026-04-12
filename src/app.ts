@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { NotFoundError } from './utils/ApiError';
 import authRoutes from './routes/auth.routes';
 import { errorHandler } from './middlewares/errorHandler.middleware';
@@ -30,6 +31,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Security middleware
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 
 // Apply global API rate limiter to all API routes
 // Note: Specific routes with their own limiters will override this
