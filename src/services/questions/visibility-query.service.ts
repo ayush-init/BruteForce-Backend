@@ -30,7 +30,19 @@ export const getAssignedQuestionsOfClassService = async ({
         slug: topicSlug,
       },
     },
-    select: { id: true },
+    select: {
+      id: true,
+      class_name: true,
+      description: true,
+      pdf_url: true,
+      duration_minutes: true,
+      class_date: true,
+      topic: {
+        select: {
+          topic_name: true,
+        },
+      },
+    },
   });
 
   if (!cls) {
@@ -103,6 +115,14 @@ export const getAssignedQuestionsOfClassService = async ({
       limit: safeLimit,
       total,
       totalPages,
+    },
+    classDetails: {
+      class_name: cls.class_name,
+      description: cls.description,
+      pdf_url: cls.pdf_url,
+      duration_minutes: cls.duration_minutes,
+      class_date: cls.class_date,
+      topic_name: cls.topic.topic_name,
     },
   };
 };

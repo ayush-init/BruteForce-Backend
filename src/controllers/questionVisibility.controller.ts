@@ -66,6 +66,7 @@ export const getAssignedQuestionsOfClass = asyncHandler(async (
               message: "Assigned questions retrieved successfully",
               data: assigned.data,
               pagination: assigned.pagination,
+              classDetails: assigned.classDetails,
             });
         });
 
