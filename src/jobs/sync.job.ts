@@ -118,7 +118,7 @@ export function startSyncJob() {
 
   // Leaderboard Sync Cron: 9 AM, 6 PM, 11 PM
   cron.schedule("0 9,18,23 * * *", async () => {
-  // cron.schedule("*/1 * * * *", async () => {
+    // cron.schedule("*/1 * * * *", async () => {
     try {
       console.log("[CRON] Leaderboard sync cycle started");
       await tryRunLeaderboard();

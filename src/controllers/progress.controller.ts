@@ -16,16 +16,12 @@ import { ApiError } from "../utils/ApiError";
  */
 export const manualSync = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  
   // Validate student ID parameter
   if (!id || isNaN(Number(id))) {
     throw new ApiError(400, "Valid student ID is required", [], "INVALID_STUDENT_ID");
   }
-  
   const studentId = Number(id);
-  
   const result = await syncOneStudent(studentId);
-  
   return res.status(200).json({
     success: true,
     message: "Student progress synchronized successfully",

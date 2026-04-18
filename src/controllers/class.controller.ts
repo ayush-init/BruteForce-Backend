@@ -32,43 +32,39 @@ export const getClassesByTopic = asyncHandler(async (
         });
 
 export const createClassInTopic = asyncHandler(async (
-          req: ExtendedRequest,
-          res: Response
-        ) => {
-          try {
-            const batch = req.batch;
-            if (!batch) {
-              throw new ApiError(401, "Authentication required - batch information missing");
-            }
+    req: ExtendedRequest,
+    res: Response
+) => {
+    try {
+        const batch = req.batch;
+        if (!batch) {
+            throw new ApiError(401, "Authentication required - batch information missing");
+        }
 
-            // Validate topic slug and class data using service
-            const topicSlug = validateTopicSlug(req.params.topicSlug);
-            const classData = validateClassCreateData(req.body, req.file);
+        // Validate topic slug and class data using service
+        const topicSlug = validateTopicSlug(req.params.topicSlug);
+        const classData = validateClassCreateData(req.body, req.file);
 
-            
-
-            const newClass = await createClassInTopicService({
-              batchId: batch.id,
-              topicSlug: topicSlug,
-              class_name: classData.class_name,
-              description: classData.description,
-              pdf_url: classData.pdf_url,
-              pdf_file: classData.pdf_file,
-              duration_minutes: classData.duration_minutes,
-              class_date: classData.class_date
-            });
-
-            
-            return res.status(201).json({
-              message: "Class created successfully",
-              class: newClass,
-            });
-          
-          } catch (error: any) {
-    if (error instanceof ApiError) throw error;
-            throw new ApiError(400, error.message,);
-          }
+        const newClass = await createClassInTopicService({
+            batchId: batch.id,
+            topicSlug: topicSlug,
+            class_name: classData.class_name,
+            description: classData.description,
+            pdf_url: classData.pdf_url,
+            pdf_file: classData.pdf_file,
+            duration_minutes: classData.duration_minutes,
+            class_date: classData.class_date
         });
+
+        return res.status(201).json({
+            message: "Class created successfully",
+            class: newClass,
+        });
+    } catch (error: any) {
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(400, error.message);
+    }
+});
 
 
 export const getClassDetails = asyncHandler(async (
@@ -85,103 +81,103 @@ export const getClassDetails = asyncHandler(async (
             const classSlug = validateTopicSlug(req.params.classSlug);
 
             const classDetails = await getClassDetailsService({
-              batchId: batch.id,
-              topicSlug: topicSlug,
-              classSlug: classSlug,
+                batchId: batch.id,
+                topicSlug: topicSlug,
+                classSlug: classSlug,
             });
 
             return res.json(classDetails);
         });
 
 export const updateClass = asyncHandler(async (
-          req: ExtendedRequest,
-          res: Response
-        ) => {
-            const batch = req.batch;
-            if (!batch) {
-              throw new ApiError(401, "Authentication required - batch information missing");
-            }
-            
-            const topicSlugParam = req.params.topicSlug;
-            const classSlug = req.params.classSlug;
+    req: ExtendedRequest,
+    res: Response
+) => {
+    const batch = req.batch;
+    if (!batch) {
+        throw new ApiError(401, "Authentication required - batch information missing");
+    }
 
-            if (typeof topicSlugParam !== "string") {
-              throw new ApiError(400, "Invalid topic slug",);
-            }
+    const topicSlugParam = req.params.topicSlug;
+    const classSlug = req.params.classSlug;
 
-            if (typeof classSlug !== "string") {
-              throw new ApiError(400, "Invalid class slug",);
-            }
+    if (typeof topicSlugParam !== "string") {
+        throw new ApiError(400, "Invalid topic slug");
+    }
 
-            const updated = await updateClassService({
-              batchId: batch.id,
-              topicSlug: topicSlugParam,
-              classSlug,
-              ...req.body,
-              pdf_file: req.file, // Handle PDF file upload
-            });
+    if (typeof classSlug !== "string") {
+        throw new ApiError(400, "Invalid class slug");
+    }
 
-            return res.json({
-              message: "Class updated successfully",
-              class: updated,
-            });
-        });
+    const updated = await updateClassService({
+        batchId: batch.id,
+        topicSlug: topicSlugParam,
+        classSlug,
+        ...req.body,
+        pdf_file: req.file, // Handle PDF file upload
+    });
+
+    return res.json({
+        message: "Class updated successfully",
+        class: updated,
+    });
+});
 
 export const deleteClass = asyncHandler(async (
-          req: ExtendedRequest,
-          res: Response
-        ) => {
-            const batch = req.batch;
-            if (!batch) {
-              throw new ApiError(401, "Authentication required - batch information missing");
-            }
-            
-            const topicSlugParam = req.params.topicSlug;
-            const classSlug = req.params.classSlug;
+    req: ExtendedRequest,
+    res: Response
+) => {
+    const batch = req.batch;
+    if (!batch) {
+        throw new ApiError(401, "Authentication required - batch information missing");
+    }
 
-            if (typeof topicSlugParam !== "string") {
-              throw new ApiError(400, "Invalid topic slug",);
-            }
+    const topicSlugParam = req.params.topicSlug;
+    const classSlug = req.params.classSlug;
 
-            if (typeof classSlug !== "string") {
-              throw new ApiError(400, "Invalid class slug",);
-            }
+    if (typeof topicSlugParam !== "string") {
+        throw new ApiError(400, "Invalid topic slug");
+    }
 
-            await deleteClassService({
-              batchId: batch.id,
-              topicSlug: topicSlugParam,
-              classSlug,
-            });
+    if (typeof classSlug !== "string") {
+        throw new ApiError(400, "Invalid class slug");
+    }
 
-            return res.json({
-              message: "Class deleted successfully",
-            });
-        });
+    await deleteClassService({
+        batchId: batch.id,
+        topicSlug: topicSlugParam,
+        classSlug,
+    });
+
+    return res.json({
+        message: "Class deleted successfully",
+    });
+});
 
 // Student-specific controller - get class details with full questions array
 export const getClassDetailsWithFullQuestions = asyncHandler(async (req: ExtendedRequest, res: Response) => {
-            // Get student info from middleware (extractStudentInfo)
-            const student = req.student;
-            const batchId = req.batchId;
-            const { topicSlug, classSlug } = req.params;
-            
-            const studentId = student?.id;
-            
-            // Ensure slugs are strings (not string arrays)
-            const topic = Array.isArray(topicSlug) ? topicSlug[0] : topicSlug;
-            const cls = Array.isArray(classSlug) ? classSlug[0] : classSlug;
+    // Get student info from middleware (extractStudentInfo)
+    const student = req.student;
+    const batchId = req.batchId;
+    const { topicSlug, classSlug } = req.params;
 
-            if (!studentId || !batchId || !topic || !cls) {
-              throw new ApiError(400, "Student authentication and topic/class slugs required",);
-            }
+    const studentId = student?.id;
 
-            const classDetails = await getClassDetailsWithFullQuestionsService({
-              studentId,
-              batchId,
-              topicSlug: topic,
-              classSlug: cls,
-              query: req.query,
-            });
+    // Ensure slugs are strings (not string arrays)
+    const topic = Array.isArray(topicSlug) ? topicSlug[0] : topicSlug;
+    const cls = Array.isArray(classSlug) ? classSlug[0] : classSlug;
 
-            return res.json(classDetails);
-        });
+    if (!studentId || !batchId || !topic || !cls) {
+        throw new ApiError(400, "Student authentication and topic/class slugs required");
+    }
+
+    const classDetails = await getClassDetailsWithFullQuestionsService({
+        studentId,
+        batchId,
+        topicSlug: topic,
+        classSlug: cls,
+        query: req.query,
+    });
+
+    return res.json(classDetails);
+});

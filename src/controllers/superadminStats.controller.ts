@@ -6,27 +6,27 @@ import { ApiError } from "../utils/ApiError";
 import { ExtendedRequest } from "../types";
 
 export const getCurrentSuperAdminController = asyncHandler(async (req: ExtendedRequest, res: Response) => {
-        // Get superadmin info from middleware (extracted from token)
-        const superadminInfo = req.admin;
+    // Get superadmin info from middleware (extracted from token)
+    const superadminInfo = req.admin;
 
-        if (!superadminInfo) {
-            return res.status(401).json({
-                success: false,
-                message: "SuperAdmin not authenticated"
-            });
-        }
-
-        const superadmin = await getCurrentSuperAdminService(superadminInfo.id);
-
-        return res.status(200).json({
-            success: true,
-            data: {
-                id: superadmin.id,
-                name: superadmin.name,
-                email: superadmin.email,
-                role: superadmin.role
-            }
+    if (!superadminInfo) {
+        return res.status(401).json({
+            success: false,
+            message: "SuperAdmin not authenticated"
         });
+    }
+
+    const superadmin = await getCurrentSuperAdminService(superadminInfo.id);
+
+    return res.status(200).json({
+        success: true,
+        data: {
+            id: superadmin.id,
+            name: superadmin.name,
+            email: superadmin.email,
+            role: superadmin.role
+        }
+    });
 });
 
 

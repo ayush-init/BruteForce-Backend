@@ -60,35 +60,35 @@ export const getAllAdminsService = async (filters: any = {}) => {
 };
 
 export const getCurrentAdminService = async (adminId: number) => {
-  const admin = await prisma.admin.findUnique({
-    where: { id: adminId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      city_id: true,
-      batch_id: true,
-      city: {
+    const admin = await prisma.admin.findUnique({
+        where: { id: adminId },
         select: {
-          id: true,
-          city_name: true
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            city_id: true,
+            batch_id: true,
+            city: {
+                select: {
+                    id: true,
+                    city_name: true
+                }
+            },
+            batch: {
+                select: {
+                    id: true,
+                    batch_name: true,
+                    year: true
+                }
+            },
+            created_at: true
         }
-      },
-      batch: {
-        select: {
-          id: true,
-          batch_name: true,
-          year: true
-        }
-      },
-      created_at: true
+    });
+
+    if (!admin) {
+        throw new ApiError(404, "Admin not found", [], "ADMIN_NOT_FOUND");
     }
-  });
 
-  if (!admin) {
-    throw new ApiError(404, "Admin not found", [], "ADMIN_NOT_FOUND");
-  }
-
-  return admin;
+    return admin;
 };

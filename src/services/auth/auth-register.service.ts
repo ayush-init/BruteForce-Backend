@@ -14,7 +14,16 @@ export const registerAdmin = async (data: {
   city_id?: number;
   batch_id?: number;
   currentUserRole?: string;
-}) => {
+}): Promise<{
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+  accessToken: string;
+  refreshToken: string;
+}> => {
   const { currentUserRole, ...adminData } = data;
 
   // Only SUPERADMIN can create admins

@@ -8,7 +8,7 @@ let processedCount = 0;
 let totalCombinations = 0;
 
 async function main() {
-  console.log("🚀 Starting population of classes and questions...");
+  console.log(" Starting population of classes and questions...");
   
   const results: ClassCreationResult[] = [];
   let totalClassesCreated = 0;
