@@ -14,8 +14,8 @@ export const generateBatchReportCSV = async (batchId: number | string) => {
         where: { id: batchIdNum },
         include: {
             city: {
-                select: { 
-                    city_name: true 
+                select: {
+                    city_name: true
                 }
             }
         }
@@ -107,17 +107,17 @@ export const generateBatchReportCSV = async (batchId: number | string) => {
     const cityName = batch.city?.city_name || 'Unknown';
     const batchName = batch.batch_name;
     const year = batch.year;
-    
+
     // Sanitize filename parts (remove special characters, replace spaces with underscores)
     const sanitizeName = (name: string) => {
         return name.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
     };
-    
+
     const sanitizedCityName = sanitizeName(cityName);
     const sanitizedBatchName = sanitizeName(batchName);
-    
+
     const filename = `${sanitizedCityName}-${sanitizedBatchName}-${year}.csv`;
-    
+
     console.log('Generated filename:', filename);
     console.log('Original values:', { cityName, batchName, year });
 

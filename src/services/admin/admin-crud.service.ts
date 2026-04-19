@@ -99,7 +99,7 @@ export const updateAdminService = async (id: number, updateData: any) => {
         // Remove username from allowed updates
         const allowedUpdates = ['name', 'email', 'role', 'batch_id', 'city_id'];
         const invalidUpdates = Object.keys(updateData).filter(key => !allowedUpdates.includes(key));
-        
+
         if (invalidUpdates.length > 0) {
             throw new ApiError(400, `Only ${allowedUpdates.join(', ')} can be updated. Invalid fields: ${invalidUpdates.join(', ')}`, [], "VALIDATION_ERROR");
         }

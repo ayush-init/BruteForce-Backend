@@ -25,17 +25,17 @@ export const errorHandler = (
 
   // Convert non-ApiError errors to ApiError
   if (!(error instanceof ApiError)) {
-    const statusCode = err && typeof err === 'object' && 'statusCode' in err 
-      ? (err as any).statusCode 
+    const statusCode = err && typeof err === 'object' && 'statusCode' in err
+      ? (err as any).statusCode
       : 500;
     const message = err instanceof Error ? err.message : 'Something went wrong';
     const stack = err instanceof Error ? err.stack : undefined;
-    
+
     error = new ApiError(
-      statusCode, 
-      message, 
-      [], 
-      "INTERNAL_ERROR", 
+      statusCode,
+      message,
+      [],
+      "INTERNAL_ERROR",
       stack
     );
   }

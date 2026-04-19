@@ -14,118 +14,112 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 
 export const createQuestion = asyncHandler(async (
-          req: Request,
-          res: Response
-        ) => {
-          const question = await createQuestionService(req.body);
+  req: Request,
+  res: Response
+) => {
+  const question = await createQuestionService(req.body);
 
-          return res.status(201).json({
-            message: "Question created successfully",
-            question,
-          });
-        });
-
-
+  return res.status(201).json({
+    message: "Question created successfully",
+    question,
+  });
+});
 export const getAllQuestions = asyncHandler(async (
-          req: Request,
-          res: Response
-        ) => {
-          const {
-            topicSlug,
-            level,
-            platform,
-            search,
-            page,
-            limit,
-          } = req.query;
+  req: Request,
+  res: Response
+) => {
+  const {
+    topicSlug,
+    level,
+    platform,
+    search,
+    page,
+    limit,
+  } = req.query;
 
-          const result = await getAllQuestionsService({
-            topicSlug: topicSlug as string | undefined,
-            level: level as string | undefined,
-            platform: platform as string | undefined,
-            search: search as string | undefined,
-            page: page ? Number(page) : 1,
-            limit: limit ? Number(limit) : 10,
-          });
+  const result = await getAllQuestionsService({
+    topicSlug: topicSlug as string | undefined,
+    level: level as string | undefined,
+    platform: platform as string | undefined,
+    search: search as string | undefined,
+    page: page ? Number(page) : 1,
+    limit: limit ? Number(limit) : 10,
+  });
 
-          return res.json(result);
-        });
+  return res.json(result);
+});
 
 
 export const updateQuestion = asyncHandler(async (
-          req: Request,
-          res: Response
-        ) => {
-          const { id } = req.params;
+  req: Request,
+  res: Response
+) => {
+  const { id } = req.params;
 
-          const updated = await updateQuestionService({
-            id: Number(id),
-            ...req.body,
-          });
+  const updated = await updateQuestionService({
+    id: Number(id),
+    ...req.body,
+  });
 
-          return res.json({
-            message: "Question updated successfully",
-            question: updated,
-          });
-        });
+  return res.json({
+    message: "Question updated successfully",
+    question: updated,
+  });
+});
 
 export const deleteQuestion = asyncHandler(async (
-          req: Request,
-          res: Response
-        ) => {
-          const { id } = req.params;
+  req: Request,
+  res: Response
+) => {
+  const { id } = req.params;
 
-          await deleteQuestionService({
-            id: Number(id),
-          });
+  await deleteQuestionService({
+    id: Number(id),
+  });
 
-          return res.json({
-            message: "Question deleted successfully",
-          });
-        });
-
-
-
-
+  return res.json({
+    message: "Question deleted successfully",
+  });
+});
 
 export const getAssignedQuestionsController = asyncHandler(async (
-          req: Request,
-          res: Response
-        ) => {
-          const data = await getAssignedQuestionsService(req.query);
+  req: Request,
+  res: Response
+) => {
+  const data = await getAssignedQuestionsService(req.query);
 
-          return res.status(200).json({
-            success: true,
-            data
-          });
-        });
+  return res.status(200).json({
+    success: true,
+    data
+  });
+});
 
 export const bulkUploadQuestions = asyncHandler(async (
-          req: Request,
-          res: Response
-        ) => {
-            if (!req.file) {
-              throw new ApiError(400, "CSV file is required");
-            }
+  req: Request,
+  res: Response
+) => {
+  if (!req.file) {
+    throw new ApiError(400, "CSV file is required");
+  }
 
-            const { topic_id } = req.body;
+  const { topic_id } = req.body;
 
-            if (!topic_id || topic_id === "undefined" || topic_id === "null") {
-              throw new ApiError(400, "Topic is required");
-            }
+  if (!topic_id || topic_id === "undefined" || topic_id === "null") {
+    throw new ApiError(400, "Topic is required");
+  }
 
-            const parsedTopicId = Number(topic_id);
-            if (isNaN(parsedTopicId) || parsedTopicId <= 0) {
-              throw new ApiError(400, "Invalid Topic ID");
-            }
+  const parsedTopicId = Number(topic_id);
+  if (isNaN(parsedTopicId) || parsedTopicId <= 0) {
+    throw new ApiError(400, "Invalid Topic ID");
+  }
 
-            const result = await bulkUploadQuestionsService(
-              req.file.buffer,
-              parsedTopicId
-            );
+  const result = await bulkUploadQuestionsService(
+    req.file.buffer,
+    parsedTopicId
+  );
 
-            return res.json({
-              message: "Bulk upload successful",
-              ...result,
-            });
-        });
+  return res.json({
+    message: "Bulk upload successful",
+    ...result,
+  });
+});

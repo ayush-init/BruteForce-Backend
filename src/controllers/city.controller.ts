@@ -7,9 +7,7 @@ import { ApiError } from "../utils/ApiError";
 export const createCity = asyncHandler(async (req: Request, res: Response) => {
            try {
             const { city_name } = req.body;
-
             const city = await createCityService({ city_name });
-
             return res.status(201).json({
               message: "City created successfully",
               city,
@@ -25,9 +23,7 @@ export const createCity = asyncHandler(async (req: Request, res: Response) => {
 export const getAllCities = asyncHandler(async (req: Request, res: Response) => {
           try {
             const { search } = req.query;
-            
             let cities = await getAllCitiesService();
-            
             // If search parameter is provided, filter cities by name
             if (search) {
               const searchTerm = search.toString().toLowerCase();
@@ -35,7 +31,6 @@ export const getAllCities = asyncHandler(async (req: Request, res: Response) => 
                 city.city_name.toLowerCase().includes(searchTerm)
               );
             }
-            
             return res.json(cities);
           } catch (error: any) {
     if (error instanceof ApiError) throw error;
@@ -48,7 +43,6 @@ export const updateCity = asyncHandler(async (req: Request, res: Response) => {
           try {
             const { id } = req.params;
             const { city_name } = req.body;
-
             const updatedCity = await updateCityService({
               id: Number(id),
               city_name,
